@@ -8,6 +8,12 @@ let notifCount = 0;
 const $ = (sel, ctx = document) => ctx.querySelector(sel);
 const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
 
+// HTML escape — previne XSS em innerHTML
+function esc(str) {
+  if (str == null) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 function getToken() { return null; /* cookie-only, token não fica no JS */ }
 function getUser() { return JSON.parse(localStorage.getItem('pg_user') || 'null'); }
 function setAuth(user) { localStorage.removeItem('pg_token'); localStorage.setItem('pg_user', JSON.stringify(user)); }
@@ -129,7 +135,7 @@ function updateNav() {
   const avatarEl = $('#nav-avatar');
   if (avatarEl) {
     if (user.avatar) {
-      avatarEl.innerHTML = `<img src="${user.avatar}" alt="">`;
+      avatarEl.innerHTML = `<img src="${esc(user.avatar)}" alt="">`;
     } else {
       avatarEl.textContent = avatarInitials(user.name);
     }
@@ -200,10 +206,10 @@ function updateSidebar(user) {
   navEl.innerHTML = navItems;
   footerEl.innerHTML = `
     <div class="sidebar-user">
-      <div class="avatar">${user.avatar ? `<img src="${user.avatar}" alt="">` : avatarInitials(user.name)}</div>
+      <div class="avatar">${user.avatar ? `<img src="${esc(user.avatar)}" alt="">` : avatarInitials(user.name)}</div>
       <div class="sidebar-user-info">
-        <div class="sidebar-user-name">${user.name}</div>
-        <div class="sidebar-user-role">${user.role}</div>
+        <div class="sidebar-user-name">${esc(user.name)}</div>
+        <div class="sidebar-user-role">${esc(user.role)}</div>
       </div>
     </div>
     <button class="nav-item" id="logout-btn" style="color:var(--gray-500)">Sair</button>
@@ -422,8 +428,8 @@ async function renderNotifPanel() {
   const items = data.notifications.length > 0
     ? data.notifications.slice(0, 8).map(n => `
       <div class="notif-item ${n.is_read ? '' : 'unread'}" onclick="navigate('#/eventos/${n.event_id}')">
-        <div class="notif-item-title">${n.title}</div>
-        <div class="notif-item-msg">${n.message}</div>
+        <div class="notif-item-title">${esc(n.title)}</div>
+        <div class="notif-item-msg">${esc(n.message)}</div>
         <div class="notif-item-time">${timeAgo(n.created_at)}</div>
       </div>`).join('')
     : '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:.85rem">Sem notificações</div>';
@@ -487,18 +493,18 @@ function buildEventCard(e) {
   const st = statusMap[status] || { cls: 'badge-pending', text: status };
 
   return `
-    <div class="event-card" data-modality="${e.modality}" data-city="${e.arena_city||''}" data-fee="${e.registration_fee||0}" data-date="${(e.event_date||'').toString().slice(0,10)}" onclick="navigate('#/eventos/${e.id}')">
+    <div class="event-card" data-modality="${esc(e.modality)}" data-city="${esc(e.arena_city||'')}" data-fee="${e.registration_fee||0}" data-date="${(e.event_date||'').toString().slice(0,10)}" onclick="navigate('#/eventos/${e.id}')">
       <div class="event-card-header">
-        ${e.banner ? `<img src="${e.banner}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1">` : ''}
+        ${e.banner ? `<img src="${esc(e.banner)}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1">` : ''}
         <div class="event-card-header-content">
           <span class="event-modality-badge">${getModalityLabel(e.modality)}</span>
         </div>
       </div>
       <div class="event-card-body">
-        <div class="event-card-title">${e.title}</div>
+        <div class="event-card-title">${esc(e.title)}</div>
         <div class="event-meta">
           <div class="event-meta-item">${formatDate(e.event_date)}${e.start_time ? ' • ' + (e.start_time||'').slice(0,5) : ''}</div>
-          <div class="event-meta-item">${e.arena_name || 'Arena'}${e.arena_city ? ', ' + e.arena_city : ''}</div>
+          <div class="event-meta-item">${esc(e.arena_name || 'Arena')}${e.arena_city ? ', ' + esc(e.arena_city) : ''}</div>
           <div class="event-meta-item">${paid} / ${limit} times</div>
         </div>
         <div class="progress-bar"><div class="progress-fill" style="width:${pctFull}%"></div></div>
@@ -555,10 +561,10 @@ function buildEventDetailHTML(ev, user, isOwner, myReg) {
 
   const paidList = paid.map(r => `
     <div class="athlete-item">
-      <div class="athlete-avatar">${r.athlete_avatar ? `<img src="${r.athlete_avatar}">` : avatarInitials(r.athlete_name)}</div>
+      <div class="athlete-avatar">${r.athlete_avatar ? `<img src="${esc(r.athlete_avatar)}">` : avatarInitials(r.athlete_name)}</div>
       <div class="athlete-info">
-        <div class="athlete-name">${r.athlete_name}</div>
-        <div class="athlete-sub">${r.team_name || r.partner_name || 'Individual'}</div>
+        <div class="athlete-name">${esc(r.athlete_name)}</div>
+        <div class="athlete-sub">${esc(r.team_name || r.partner_name || 'Individual')}</div>
       </div>
       <span class="athlete-status-badge badge-paid">✓ Pago</span>
       ${isOwner ? `<button class="btn btn-sm btn-ghost" onclick="confirmPayment(${r.id})">✓</button>` : ''}
@@ -566,10 +572,10 @@ function buildEventDetailHTML(ev, user, isOwner, myReg) {
 
   const pendingList = pending.map(r => `
     <div class="athlete-item">
-      <div class="athlete-avatar">${r.athlete_avatar ? `<img src="${r.athlete_avatar}">` : avatarInitials(r.athlete_name)}</div>
+      <div class="athlete-avatar">${r.athlete_avatar ? `<img src="${esc(r.athlete_avatar)}">` : avatarInitials(r.athlete_name)}</div>
       <div class="athlete-info">
-        <div class="athlete-name">${r.athlete_name}</div>
-        <div class="athlete-sub">${r.team_name || r.partner_name || 'Individual'}</div>
+        <div class="athlete-name">${esc(r.athlete_name)}</div>
+        <div class="athlete-sub">${esc(r.team_name || r.partner_name || 'Individual')}</div>
       </div>
       <span class="athlete-status-badge badge-pending">Pendente</span>
       ${isOwner ? `<button class="btn btn-sm btn-secondary" onclick="confirmPayment(${r.id})">Confirmar</button>` : ''}
@@ -577,10 +583,10 @@ function buildEventDetailHTML(ev, user, isOwner, myReg) {
 
   const commentsList = comments.map(c => `
     <div class="comment-item">
-      <div class="comment-avatar">${c.user_avatar ? `<img src="${c.user_avatar}">` : avatarInitials(c.user_name)}</div>
+      <div class="comment-avatar">${c.user_avatar ? `<img src="${esc(c.user_avatar)}">` : avatarInitials(c.user_name)}</div>
       <div class="comment-bubble ${c.user_role==='organizador'?'org':''}">
-        <div class="comment-meta"><strong>${c.user_name}</strong><span>${timeAgo(c.created_at)}</span>${c.user_role==='organizador'?'<span class="status-pill status-confirmado" style="font-size:.65rem">Organizador</span>':''}</div>
-        <div class="comment-text">${c.message}</div>
+        <div class="comment-meta"><strong>${esc(c.user_name)}</strong><span>${timeAgo(c.created_at)}</span>${c.user_role==='organizador'?'<span class="status-pill status-confirmado" style="font-size:.65rem">Organizador</span>':''}</div>
+        <div class="comment-text">${esc(c.message)}</div>
       </div>
     </div>`).join('') || '<p class="text-muted text-center" style="padding:12px">Sem comentários ainda. Seja o primeiro!</p>';
 
@@ -607,11 +613,11 @@ function buildEventDetailHTML(ev, user, isOwner, myReg) {
     <div class="event-detail-header">
       <button class="back-btn" onclick="history.back()" style="color:rgba(255,255,255,.7);margin-bottom:12px">← Voltar</button>
       <div class="event-detail-modality">${getModalityLabel(ev.modality)}</div>
-      <div class="event-detail-title">${ev.title}</div>
+      <div class="event-detail-title">${esc(ev.title)}</div>
       <div class="event-detail-meta">
         <div class="event-detail-meta-row">${formatDate(ev.event_date)} às ${(ev.start_time||'').slice(0,5)}</div>
-        <div class="event-detail-meta-row">${ev.arena_name} — ${ev.arena_address}, ${ev.arena_city}/${ev.arena_state}</div>
-        <div class="event-detail-meta-row">Organizado por ${ev.organizer_name}</div>
+        <div class="event-detail-meta-row">${esc(ev.arena_name)} — ${esc(ev.arena_address)}, ${esc(ev.arena_city)}/${esc(ev.arena_state)}</div>
+        <div class="event-detail-meta-row">Organizado por ${esc(ev.organizer_name)}</div>
       </div>
     </div>
 
@@ -630,7 +636,7 @@ function buildEventDetailHTML(ev, user, isOwner, myReg) {
         <div class="card-body" style="display:flex;align-items:center;gap:12px">
           <div style="font-size:1.5rem">${ev.arena_confirmed ? 'Sim' : 'Não'}</div>
           <div>
-            <div style="font-weight:700;font-size:.9rem">Arena: ${ev.arena_name}</div>
+            <div style="font-weight:700;font-size:.9rem">Arena: ${esc(ev.arena_name)}</div>
             <div class="text-muted">${ev.arena_confirmed ? 'Evento confirmado pela arena!' : 'Aguardando confirmação da arena'}</div>
           </div>
           <span class="status-pill status-${ev.arena_confirmed ? 'confirmado' : 'pendente'}" style="margin-left:auto">${ev.arena_confirmed ? 'Confirmado' : 'Pendente'}</span>
@@ -646,14 +652,14 @@ function buildEventDetailHTML(ev, user, isOwner, myReg) {
       </div>
 
       <div id="tab-info" class="tab-content">
-        ${ev.description ? `<div class="card mb-12"><div class="card-body"><h3 style="font-size:1rem;margin-bottom:8px">Sobre o evento</h3><p style="font-size:.9rem;color:var(--text-secondary)">${ev.description}</p></div></div>` : ''}
-        ${ev.rules ? `<div class="card mb-12"><div class="card-body"><h3 style="font-size:1rem;margin-bottom:8px">Regras</h3><p style="font-size:.9rem;color:var(--text-secondary);white-space:pre-wrap">${ev.rules}</p></div></div>` : ''}
+        ${ev.description ? `<div class="card mb-12"><div class="card-body"><h3 style="font-size:1rem;margin-bottom:8px">Sobre o evento</h3><p style="font-size:.9rem;color:var(--text-secondary)">${esc(ev.description)}</p></div></div>` : ''}
+        ${ev.rules ? `<div class="card mb-12"><div class="card-body"><h3 style="font-size:1rem;margin-bottom:8px">Regras</h3><p style="font-size:.9rem;color:var(--text-secondary);white-space:pre-wrap">${esc(ev.rules)}</p></div></div>` : ''}
         <div class="card mb-12">
           <div class="card-body">
             <h3 style="font-size:1rem;margin-bottom:10px">Local</h3>
-            <div style="font-weight:600">${ev.arena_name}</div>
-            <div class="text-muted">${ev.arena_address}, ${ev.arena_city} - ${ev.arena_state}</div>
-            ${ev.arena_phone ? `<div class="text-muted">${ev.arena_phone}</div>` : ''}
+            <div style="font-weight:600">${esc(ev.arena_name)}</div>
+            <div class="text-muted">${esc(ev.arena_address)}, ${esc(ev.arena_city)} - ${esc(ev.arena_state)}</div>
+            ${ev.arena_phone ? `<div class="text-muted">${esc(ev.arena_phone)}</div>` : ''}
           </div>
         </div>
         <div style="margin-top:16px">${registrationActions}</div>
@@ -767,11 +773,11 @@ function openRegisterModal(eventId, ev) {
           <div class="card mb-12" style="background:var(--gray-50)">
             <div class="card-body" style="padding:14px;display:flex;align-items:center;gap:12px">
               <div class="profile-avatar-sm" style="width:40px;height:40px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px;overflow:hidden;flex-shrink:0">
-                ${user.avatar ? `<img src="${user.avatar}" style="width:100%;height:100%;object-fit:cover">` : (user.name||'U').charAt(0)}
+                ${user.avatar ? `<img src="${esc(user.avatar)}" style="width:100%;height:100%;object-fit:cover">` : (user.name||'U').charAt(0)}
               </div>
               <div style="flex:1;min-width:0">
-                <div style="font-weight:700;font-size:.9rem">${user.name}</div>
-                <div style="font-size:.78rem;color:var(--text-secondary)">${user.email} ${user.phone ? '| ' + user.phone : ''}</div>
+                <div style="font-weight:700;font-size:.9rem">${esc(user.name)}</div>
+                <div style="font-size:.78rem;color:var(--text-secondary)">${esc(user.email)} ${user.phone ? '| ' + esc(user.phone) : ''}</div>
               </div>
               <svg width="16" height="16" fill="none" stroke="var(--military)" stroke-width="2.5"><path d="M13.5 4.5L6 12 2.5 8.5"/></svg>
             </div>
@@ -826,11 +832,11 @@ function openRegisterModal(eventId, ev) {
         $('#partner-results').innerHTML = '<div style="padding:10px;font-size:.82rem;color:var(--text-secondary)">Nenhum usuário encontrado</div>';
       } else {
         $('#partner-results').innerHTML = results.map(u => `
-          <div style="padding:8px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--gray-100)" onmouseover="this.style.background='var(--gray-50)'" onmouseout="this.style.background=''" onclick="selectPartner(${u.id}, '${(u.name||'').replace(/'/g,"\\'")}', '${u.email||''}')">
+          <div style="padding:8px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--gray-100)" onmouseover="this.style.background='var(--gray-50)'" onmouseout="this.style.background=''" data-pid="${u.id}" data-pname="${esc(u.name||'')}" data-pemail="${esc(u.email||'')}" onclick="selectPartner(+this.dataset.pid, this.dataset.pname, this.dataset.pemail)">
             <div style="width:30px;height:30px;border-radius:50%;background:var(--military);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700;overflow:hidden;flex-shrink:0">
-              ${u.avatar ? `<img src="${u.avatar}" style="width:100%;height:100%;object-fit:cover">` : (u.name||'U').charAt(0)}
+              ${u.avatar ? `<img src="${esc(u.avatar)}" style="width:100%;height:100%;object-fit:cover">` : (u.name||'U').charAt(0)}
             </div>
-            <div><div style="font-size:.85rem;font-weight:600">${u.name}</div><div style="font-size:.75rem;color:var(--text-secondary)">${u.email}</div></div>
+            <div><div style="font-size:.85rem;font-weight:600">${esc(u.name)}</div><div style="font-size:.75rem;color:var(--text-secondary)">${esc(u.email)}</div></div>
           </div>`).join('');
       }
       $('#partner-results').style.display = 'block';
@@ -846,8 +852,8 @@ function openRegisterModal(eventId, ev) {
     $('#selected-partner').style.display = 'block';
     $('#selected-partner').innerHTML = `
       <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--gray-50);border-radius:8px">
-        <div style="width:28px;height:28px;border-radius:50%;background:var(--military);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700">${name.charAt(0)}</div>
-        <div style="flex:1"><span style="font-weight:600;font-size:.85rem">${name}</span><span style="font-size:.78rem;color:var(--text-secondary);margin-left:6px">${email}</span></div>
+        <div style="width:28px;height:28px;border-radius:50%;background:var(--military);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700">${esc(name).charAt(0)}</div>
+        <div style="flex:1"><span style="font-weight:600;font-size:.85rem">${esc(name)}</span><span style="font-size:.78rem;color:var(--text-secondary);margin-left:6px">${esc(email)}</span></div>
         <button onclick="clearPartner()" style="border:none;background:none;cursor:pointer;color:var(--text-secondary);font-size:18px">✕</button>
       </div>`;
   };
@@ -1031,13 +1037,13 @@ async function renderMyRegistrations(el) {
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
             <div>
               <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;color:var(--orange);text-transform:uppercase">${getModalityLabel(r.modality)}</div>
-              <div style="font-weight:700;font-size:1rem;margin-top:2px">${r.title}</div>
+              <div style="font-weight:700;font-size:1rem;margin-top:2px">${esc(r.title)}</div>
             </div>
             <span class="athlete-status-badge ${r.payment_status==='pago'?'badge-paid':'badge-pending'}">${r.payment_status==='pago'?'✓ Pago':'Pendente'}</span>
           </div>
           <div class="event-card-meta">
             <div class="event-meta-row"><span class="icon"></span>${formatDate(r.event_date)}</div>
-            <div class="event-meta-row"><span class="icon"></span>${r.arena_name}, ${r.arena_city}</div>
+            <div class="event-meta-row"><span class="icon"></span>${esc(r.arena_name)}, ${esc(r.arena_city)}</div>
             <div class="event-meta-row"><span class="icon"></span>${formatCurrency(r.registration_fee)}</div>
           </div>
         </div>
@@ -1067,8 +1073,8 @@ async function renderMyInvites(el) {
         <div class="card-body" style="padding:14px;display:flex;align-items:center;gap:12px">
           <div style="width:40px;height:40px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px;flex-shrink:0">${(inv.inviter_name||'?').charAt(0)}</div>
           <div style="flex:1;min-width:0">
-            <div style="font-weight:700;font-size:.88rem">${inv.inviter_name||'Jogador'} convidou você</div>
-            <div style="font-size:.78rem;color:var(--text-secondary)">${inv.event_title||'Evento'} - ${inv.modality||''}</div>
+            <div style="font-weight:700;font-size:.88rem">${esc(inv.inviter_name||'Jogador')} convidou você</div>
+            <div style="font-size:.78rem;color:var(--text-secondary)">${esc(inv.event_title||'Evento')} - ${esc(inv.modality||'')}</div>
           </div>
           <div style="display:flex;gap:6px">
             <button class="btn btn-primary btn-sm" onclick="respondInvite(${inv.id},'accept')">Aceitar</button>
@@ -1082,8 +1088,8 @@ async function renderMyInvites(el) {
         <div class="card-body" style="padding:14px;display:flex;align-items:center;gap:12px">
           <div style="width:40px;height:40px;border-radius:50%;background:var(--military);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px;flex-shrink:0">${(inv.invitee_name||inv.invitee_email||'?').charAt(0)}</div>
           <div style="flex:1;min-width:0">
-            <div style="font-weight:700;font-size:.88rem">${inv.invitee_name||inv.invitee_email||'Convidado'}</div>
-            <div style="font-size:.78rem;color:var(--text-secondary)">${inv.event_title||'Evento'} - <span style="color:${inv.status==='aceito'?'var(--military)':inv.status==='recusado'?'var(--danger)':'var(--orange)'}">${inv.status}</span></div>
+            <div style="font-weight:700;font-size:.88rem">${esc(inv.invitee_name||inv.invitee_email||'Convidado')}</div>
+            <div style="font-size:.78rem;color:var(--text-secondary)">${esc(inv.event_title||'Evento')} - <span style="color:${inv.status==='aceito'?'var(--military)':inv.status==='recusado'?'var(--danger)':'var(--orange)'}">${esc(inv.status)}</span></div>
           </div>
         </div>
       </div>`).join('') || '<div class="empty-state"><p>Nenhum convite enviado</p></div>';
@@ -1123,11 +1129,11 @@ async function renderInvitePage(el, token) {
           <div class="card-body" style="padding:28px;text-align:center">
             <svg width="48" height="48" fill="none" stroke="var(--orange)" stroke-width="1.5" style="margin-bottom:16px"><rect x="6" y="6" width="36" height="36" rx="8"/><path d="M16 24l6 6 12-12"/></svg>
             <h2 style="margin-bottom:6px">Convite para torneio</h2>
-            <p style="color:var(--text-secondary);margin-bottom:16px">${inv.inviter_name||'Um jogador'} convidou você para participar como dupla.</p>
+            <p style="color:var(--text-secondary);margin-bottom:16px">${esc(inv.inviter_name||'Um jogador')} convidou você para participar como dupla.</p>
             <div class="card mb-12" style="background:var(--gray-50);text-align:left">
               <div class="card-body" style="padding:14px">
-                <div style="font-weight:700;margin-bottom:4px">${inv.event_title||'Evento'}</div>
-                <div style="font-size:.82rem;color:var(--text-secondary)">${inv.modality||''}</div>
+                <div style="font-weight:700;margin-bottom:4px">${esc(inv.event_title||'Evento')}</div>
+                <div style="font-size:.82rem;color:var(--text-secondary)">${esc(inv.modality||'')}</div>
               </div>
             </div>
             ${inv.status !== 'pendente' ? `<div style="font-weight:600;color:var(--text-secondary)">Este convite já foi ${inv.status}.</div>` :
@@ -1237,20 +1243,20 @@ async function renderProfile(el) {
     el.innerHTML = `
       <div class="profile-page">
         <div class="profile-cover" onclick="$('#banner-input').click()" style="cursor:pointer">
-          ${user.banner ? `<img src="${user.banner}" class="profile-cover-img">` : '<div class="profile-cover-pattern"></div>'}
+          ${user.banner ? `<img src="${esc(user.banner)}" class="profile-cover-img">` : '<div class="profile-cover-pattern"></div>'}
           <div class="profile-cover-edit">Alterar capa</div>
           <input type="file" id="banner-input" accept="image/*" style="display:none" onchange="uploadBanner(this)">
         </div>
         <div class="profile-body">
           <div class="profile-avatar-section">
             <div class="profile-avatar-xl" onclick="$('#avatar-input').click()">
-              ${user.avatar ? `<img src="${user.avatar}" alt="">` : avatarInitials(user.name)}
+              ${user.avatar ? `<img src="${esc(user.avatar)}" alt="">` : avatarInitials(user.name)}
               <div class="avatar-overlay">Foto</div>
               <input type="file" id="avatar-input" accept="image/*" style="display:none" onchange="uploadAvatar(this)">
             </div>
           </div>
           <div class="profile-name-section">
-            <div class="profile-display-name">${user.name}</div>
+            <div class="profile-display-name">${esc(user.name)}</div>
             <div class="profile-role-chip ${user.role === 'organizador' ? 'chip-organizer' : 'chip-athlete'}">${user.role === 'organizador' ? 'Organizador' : 'Atleta'}</div>
           </div>
 
@@ -1271,15 +1277,15 @@ async function renderProfile(el) {
           <div class="profile-info-grid">
             <div class="profile-field">
               <label class="form-label">Nome *</label>
-              <input type="text" class="form-control" id="p-name" value="${user.name||''}">
+              <input type="text" class="form-control" id="p-name" value="${esc(user.name||'')}">
             </div>
             <div class="profile-field">
               <label class="form-label">Telefone *</label>
-              <input type="tel" class="form-control" id="p-phone" value="${user.phone||''}" placeholder="(11) 99999-9999">
+              <input type="tel" class="form-control" id="p-phone" value="${esc(user.phone||'')}" placeholder="(11) 99999-9999">
             </div>
             <div class="profile-field">
               <label class="form-label">CPF *</label>
-              <input type="text" class="form-control" id="p-cpf" value="${user.cpf||''}" placeholder="000.000.000-00" maxlength="14" oninput="maskCPF(this)">
+              <input type="text" class="form-control" id="p-cpf" value="${esc(user.cpf||'')}" placeholder="000.000.000-00" maxlength="14" oninput="maskCPF(this)">
             </div>
             <div class="profile-field">
               <label class="form-label">Data de nascimento *</label>
@@ -1303,7 +1309,7 @@ async function renderProfile(el) {
             </div>
             <div class="profile-field">
               <label class="form-label">Cidade *</label>
-              <input type="text" class="form-control" id="p-city" value="${user.city||''}" placeholder="Ex: São Paulo">
+              <input type="text" class="form-control" id="p-city" value="${esc(user.city||'')}" placeholder="Ex: São Paulo">
             </div>
             <div class="profile-field">
               <label class="form-label">Estado *</label>
@@ -1314,11 +1320,11 @@ async function renderProfile(el) {
             </div>
             <div class="profile-field" style="grid-column:1/-1">
               <label class="form-label">E-mail</label>
-              <input type="email" class="form-control" value="${user.email||''}" disabled style="opacity:.6">
+              <input type="email" class="form-control" value="${esc(user.email||'')}" disabled style="opacity:.6">
             </div>
             <div class="profile-field" style="grid-column:1/-1">
               <label class="form-label">Bio</label>
-              <textarea class="form-control" id="p-bio">${user.bio||''}</textarea>
+              <textarea class="form-control" id="p-bio">${esc(user.bio||'')}</textarea>
             </div>
           </div>
           <div class="profile-save-bar">

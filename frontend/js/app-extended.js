@@ -25,7 +25,7 @@ window.openEditEventModal = async function(eventId) {
         <div class="modal-body">
           <div class="form-group">
             <label class="form-label">Nome do evento *</label>
-            <input type="text" class="form-control" id="ee-title" value="${ev.title || ''}">
+            <input type="text" class="form-control" id="ee-title" value="${esc(ev.title || '')}">
           </div>
           <div class="form-group">
             <label class="form-label">Modalidade *</label>
@@ -66,11 +66,11 @@ window.openEditEventModal = async function(eventId) {
           </div>
           <div class="form-group">
             <label class="form-label">Descrição</label>
-            <textarea class="form-control" id="ee-desc">${ev.description || ''}</textarea>
+            <textarea class="form-control" id="ee-desc">${esc(ev.description || '')}</textarea>
           </div>
           <div class="form-group">
             <label class="form-label">Regras</label>
-            <textarea class="form-control" id="ee-rules" style="min-height:120px">${ev.rules || ''}</textarea>
+            <textarea class="form-control" id="ee-rules" style="min-height:120px">${esc(ev.rules || '')}</textarea>
           </div>
         </div>
         <div class="modal-footer">

@@ -6,7 +6,18 @@ const multer = require('multer');
 const path = require('path');
 const { pool } = require('../config/database');
 const { authMiddleware, requireRole } = require('../middleware/auth');
+const { auditLog } = require('../middleware/audit');
 const router = express.Router();
+
+// Helper: registra mudança de status no log unificado
+async function logPaymentChange(regId, oldStatus, newStatus, userId, reason) {
+  try {
+    await pool.query(
+      'INSERT INTO payment_status_log (registration_id, old_status, new_status, changed_by, reason) VALUES ($1,$2,$3,$4,$5)',
+      [regId, oldStatus, newStatus, userId, reason || null]
+    );
+  } catch (e) { console.error('[payment_log]', e.message); }
+}
 
 // Multer para comprovante de pagamento
 const proofStorage = multer.diskStorage({
@@ -40,13 +51,13 @@ router.post('/:regId/proof', authMiddleware, requireRole('atleta'), uploadProof.
     const proofPath = `/uploads/${req.file.filename}`;
     await pool.query('UPDATE registrations SET payment_proof=$1 WHERE id=$2', [proofPath, req.params.regId]);
 
+    await logPaymentChange(req.params.regId, rows[0].payment_status, rows[0].payment_status, req.user.id, 'Comprovante enviado');
+    auditLog('payment.proof_upload', req.user.id, { reg_id: req.params.regId, event_id: rows[0].event_id }, req);
+
     // Notificar organizador
     await pool.query(
       `INSERT INTO notifications (user_id, type, title, message, event_id) VALUES ($1, 'payment', $2, $3, $4)`,
-      [rows[0].organizer_id,
-       '💰 Comprovante enviado!',
-       `${req.user.name} enviou comprovante para "${rows[0].title}".`,
-       rows[0].event_id]
+      [rows[0].organizer_id, 'Comprovante enviado!', `${req.user.name} enviou comprovante para "${rows[0].title}".`, rows[0].event_id]
     );
 
     res.json({ message: 'Comprovante enviado com sucesso! Aguarde a confirmação do organizador.', proof: proofPath });
@@ -76,6 +87,31 @@ router.get('/event/:eventId', authMiddleware, requireRole('organizador'), async 
   }
 });
 
+// GET /api/payments/:regId/history — histórico de mudanças de status
+router.get('/:regId/history', authMiddleware, async (req, res) => {
+  try {
+    // Atleta dono ou organizador do evento
+    const { rows: reg } = await pool.query(
+      `SELECT r.athlete_id, e.organizer_id FROM registrations r JOIN events e ON e.id=r.event_id WHERE r.id=$1`,
+      [req.params.regId]
+    );
+    if (reg.length === 0) return res.status(404).json({ error: 'Inscrição não encontrada.' });
+    if (reg[0].athlete_id !== req.user.id && reg[0].organizer_id !== req.user.id) {
+      return res.status(403).json({ error: 'Sem permissão.' });
+    }
+
+    const { rows } = await pool.query(
+      `SELECT psl.*, u.name as changed_by_name FROM payment_status_log psl
+       LEFT JOIN users u ON u.id=psl.changed_by
+       WHERE psl.registration_id=$1 ORDER BY psl.created_at ASC`,
+      [req.params.regId]
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao buscar histórico.' });
+  }
+});
+
 // PUT /api/payments/:regId/approve — organizador aprova
 router.put('/:regId/approve', authMiddleware, requireRole('organizador'), async (req, res) => {
   try {
@@ -93,15 +129,19 @@ router.put('/:regId/approve', authMiddleware, requireRole('organizador'), async 
       return res.status(400).json({ error: `Limite de ${r.participant_limit} participantes pagos já atingido.` });
     }
 
+    const oldStatus = r.payment_status;
     await pool.query(
       'UPDATE registrations SET payment_status=\'pago\', payment_confirmed_at=NOW() WHERE id=$1',
       [req.params.regId]
     );
 
+    await logPaymentChange(req.params.regId, oldStatus, 'pago', req.user.id, 'Aprovado pelo organizador');
+    auditLog('payment.approve', req.user.id, { reg_id: req.params.regId, event_id: r.event_id, athlete_id: r.athlete_id }, req);
+
     // Notificar atleta
     await pool.query(
       `INSERT INTO notifications (user_id, type, title, message, event_id) VALUES ($1, 'payment', $2, $3, $4)`,
-      [r.athlete_id, '✅ Pagamento confirmado!', `Sua inscrição em "${r.title}" foi confirmada!`, r.event_id]
+      [r.athlete_id, 'Pagamento confirmado!', `Sua inscrição em "${r.title}" foi confirmada!`, r.event_id]
     );
 
     res.json({ message: 'Pagamento aprovado!' });
@@ -121,17 +161,18 @@ router.put('/:regId/reject', authMiddleware, requireRole('organizador'), async (
     );
     if (rows.length === 0) return res.status(404).json({ error: 'Registro não encontrado.' });
 
+    const oldStatus = rows[0].payment_status;
     await pool.query(
       'UPDATE registrations SET payment_status=\'pendente\', payment_proof=NULL WHERE id=$1',
       [req.params.regId]
     );
 
+    await logPaymentChange(req.params.regId, oldStatus, 'pendente', req.user.id, reason || 'Recusado pelo organizador');
+    auditLog('payment.reject', req.user.id, { reg_id: req.params.regId, event_id: rows[0].event_id, reason }, req);
+
     await pool.query(
       `INSERT INTO notifications (user_id, type, title, message, event_id) VALUES ($1, 'payment', $2, $3, $4)`,
-      [rows[0].athlete_id,
-       '❌ Comprovante recusado',
-       `Seu comprovante em "${rows[0].title}" foi recusado. ${reason ? 'Motivo: ' + reason : 'Envie novamente.'}`,
-       rows[0].event_id]
+      [rows[0].athlete_id, 'Comprovante recusado', `Seu comprovante em "${rows[0].title}" foi recusado. ${reason ? 'Motivo: ' + reason : 'Envie novamente.'}`, rows[0].event_id]
     );
 
     res.json({ message: 'Pagamento rejeitado e atleta notificado.' });

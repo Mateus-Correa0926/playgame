@@ -16,7 +16,7 @@ window.renderEventReport = async function(el, eventId) {
       <div style="background:var(--black);padding:16px 16px 12px">
         <button class="back-btn" onclick="navigate('#/eventos/${eventId}')" style="color:rgba(255,255,255,.7);margin-bottom:8px">← Voltar ao evento</button>
         <h1 style="color:var(--white);font-size:1.6rem;margin-bottom:2px">Relatório</h1>
-        <div style="color:rgba(255,255,255,.5);font-size:.82rem">${ev.title}</div>
+        <div style="color:rgba(255,255,255,.5);font-size:.82rem">${esc(ev.title)}</div>
       </div>
       <div class="container" style="padding-top:16px">
 
@@ -64,7 +64,7 @@ window.renderEventReport = async function(el, eventId) {
               <div class="info-item"><div class="info-item-label">Data</div><div class="info-item-val">${formatDate(ev.event_date)}</div></div>
               <div class="info-item"><div class="info-item-label">Horário</div><div class="info-item-val">${(ev.start_time||'').slice(0,5)}</div></div>
               <div class="info-item"><div class="info-item-label">Status</div><div class="info-item-val"><span class="status-pill status-${ev.status}">${ev.status}</span></div></div>
-              <div class="info-item"><div class="info-item-label">Arena</div><div class="info-item-val">${ev.arena_name}</div></div>
+              <div class="info-item"><div class="info-item-label">Arena</div><div class="info-item-val">${esc(ev.arena_name)}</div></div>
               <div class="info-item"><div class="info-item-label">Inscrição</div><div class="info-item-val">${formatCurrency(ev.registration_fee)}</div></div>
             </div>
           </div>
@@ -95,8 +95,8 @@ window.renderEventReport = async function(el, eventId) {
               <div class="comment-item">
                 <div class="comment-avatar">${avatarInitials(c.user_name)}</div>
                 <div class="comment-bubble ${c.user_role==='organizador'?'org':''}">
-                  <div class="comment-meta"><strong>${c.user_name}</strong><span>${timeAgo(c.created_at)}</span><span class="status-pill status-${c.user_role==='organizador'?'confirmado':'pendente'}" style="font-size:.65rem">${c.user_role}</span></div>
-                  <div class="comment-text">${c.message}</div>
+                  <div class="comment-meta"><strong>${esc(c.user_name)}</strong><span>${timeAgo(c.created_at)}</span><span class="status-pill status-${c.user_role==='organizador'?'confirmado':'pendente'}" style="font-size:.65rem">${esc(c.user_role)}</span></div>
+                  <div class="comment-text">${esc(c.message)}</div>
                 </div>
               </div>`).join('') || '<div class="empty-state"><p>Nenhum comentário ainda.</p></div>'}
           </div>
@@ -131,12 +131,12 @@ function buildReportAthleteRow(r, type) {
   return `
     <div class="athlete-item">
       <div class="athlete-avatar" style="background:${type==='paid'?'var(--green)':'var(--orange)'}">
-        ${r.athlete_avatar ? `<img src="${r.athlete_avatar}">` : avatarInitials(r.athlete_name)}
+        ${r.athlete_avatar ? `<img src="${esc(r.athlete_avatar)}">` : avatarInitials(r.athlete_name)}
       </div>
       <div class="athlete-info">
-        <div class="athlete-name">${r.athlete_name}</div>
-        <div class="athlete-sub">${r.team_name || r.partner_name || 'Individual'} ${r.athlete_phone ? '· ' + r.athlete_phone : ''}</div>
-        <div style="font-size:.72rem;color:var(--text-muted)">${r.athlete_email}</div>
+        <div class="athlete-name">${esc(r.athlete_name)}</div>
+        <div class="athlete-sub">${esc(r.team_name || r.partner_name || 'Individual')} ${r.athlete_phone ? '· ' + esc(r.athlete_phone) : ''}</div>
+        <div style="font-size:.72rem;color:var(--text-muted)">${esc(r.athlete_email)}</div>
       </div>
       <div style="text-align:right;flex-shrink:0">
         <span class="athlete-status-badge ${type==='paid'?'badge-paid':'badge-pending'}">${type==='paid'?'✓ Pago':'Pendente'}</span>

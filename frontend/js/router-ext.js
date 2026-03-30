@@ -58,11 +58,11 @@ window.renderAthletesList = async function(el) {
         <div class="card-body" style="padding:14px 16px">
           <div style="display:flex;align-items:center;gap:12px">
             <div class="athlete-avatar" style="width:48px;height:48px;font-size:1rem">
-              ${a.avatar ? `<img src="${a.avatar}">` : avatarInitials(a.name)}
+              ${a.avatar ? `<img src="${esc(a.avatar)}">` : avatarInitials(a.name)}
             </div>
             <div style="flex:1;min-width:0">
-              <div style="font-weight:700">${a.name}</div>
-              <div style="font-size:.8rem;color:var(--text-muted)">${a.email}${a.phone ? ' · ' + a.phone : ''}</div>
+              <div style="font-weight:700">${esc(a.name)}</div>
+              <div style="font-size:.8rem;color:var(--text-muted)">${esc(a.email)}${a.phone ? ' · ' + esc(a.phone) : ''}</div>
             </div>
             <div style="text-align:right;flex-shrink:0">
               <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.2rem;font-weight:800;color:var(--orange)">${a.paid_registrations || 0}</div>
@@ -101,7 +101,7 @@ window.renderSettings = function(el) {
           <div style="font-size:.78rem;font-weight:700;color:var(--text-muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px">Conta</div>
           <div onclick="navigate('#/perfil')" style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--gray-border);cursor:pointer">
             <span style="font-size:1.2rem"></span>
-            <div style="flex:1"><div style="font-weight:600">Editar perfil</div><div style="font-size:.8rem;color:var(--text-muted)">${user?.name || ''}</div></div>
+            <div style="flex:1"><div style="font-weight:600">Editar perfil</div><div style="font-size:.8rem;color:var(--text-muted)">${esc(user?.name || '')}</div></div>
             <span style="color:var(--text-muted)">›</span>
           </div>
           <div onclick="navigate('#/perfil')" style="display:flex;align-items:center;gap:12px;padding:12px 0;cursor:pointer">
@@ -205,16 +205,16 @@ window.renderMyRegistrations = async function(el) {
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
             <div>
               <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;color:var(--orange);text-transform:uppercase">${getModalityLabel(r.modality)}</div>
-              <div style="font-weight:700;font-size:1rem;margin-top:2px">${r.title}</div>
+              <div style="font-weight:700;font-size:1rem;margin-top:2px">${esc(r.title)}</div>
             </div>
             <span class="athlete-status-badge ${r.payment_status==='pago'?'badge-paid':'badge-pending'}">${r.payment_status==='pago'?'✓ Pago':'Pendente'}</span>
           </div>
           <div class="event-card-meta">
             <div class="event-meta-row"><span class="icon"></span>${formatDate(r.event_date)} às ${(r.start_time||'').slice(0,5)}</div>
-            <div class="event-meta-row"><span class="icon"></span>${r.arena_name}, ${r.arena_city}</div>
+            <div class="event-meta-row"><span class="icon"></span>${esc(r.arena_name)}, ${esc(r.arena_city)}</div>
             <div class="event-meta-row"><span class="icon"></span>${formatCurrency(r.registration_fee)}</div>
-            ${r.team_name ? `<div class="event-meta-row"><span class="icon"></span>${r.team_name}</div>` : ''}
-            ${r.partner_name ? `<div class="event-meta-row"><span class="icon"></span>${r.partner_name}</div>` : ''}
+            ${r.team_name ? `<div class="event-meta-row"><span class="icon"></span>${esc(r.team_name)}</div>` : ''}
+            ${r.partner_name ? `<div class="event-meta-row"><span class="icon"></span>${esc(r.partner_name)}</div>` : ''}
           </div>
         </div>
         ${r.payment_status === 'pendente' ? `

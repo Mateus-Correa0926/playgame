@@ -27,7 +27,7 @@ window.renderBrackets = async function(el, eventId) {
         <div style="display:flex;align-items:center;justify-content:space-between">
           <div>
             <h1 style="color:var(--white);font-size:1.6rem;margin-bottom:2px">Chaveamento</h1>
-            <div style="color:rgba(255,255,255,.5);font-size:.82rem">${eventData?.title || ''}</div>
+            <div style="color:rgba(255,255,255,.5);font-size:.82rem">${esc(eventData?.title || '')}</div>
           </div>
           ${isOwner ? `<button class="btn btn-primary btn-sm" onclick="generateBracket(${eventId})">Gerar</button>` : ''}
         </div>
@@ -75,8 +75,8 @@ function buildBracketHTML(data, isOwner, eventId) {
 }
 
 function buildMatchCard(m, isOwner) {
-  const t1name = m.team1_squad || m.team1_name || (m.team1_partner ? `${m.team1_name} & ${m.team1_partner}` : 'BYE');
-  const t2name = m.team2_squad || m.team2_name || (m.team2_partner ? `${m.team2_name} & ${m.team2_partner}` : 'BYE');
+  const t1name = esc(m.team1_squad || m.team1_name || (m.team1_partner ? `${m.team1_name} & ${m.team1_partner}` : 'BYE'));
+  const t2name = esc(m.team2_squad || m.team2_name || (m.team2_partner ? `${m.team2_name} & ${m.team2_partner}` : 'BYE'));
   const isWin1 = m.winner_reg_id === m.team1_reg_id;
   const isWin2 = m.winner_reg_id === m.team2_reg_id;
   const done = m.status === 'finalizado';
@@ -137,9 +137,9 @@ window.openMatchResultModal = function(match) {
         </div>
         <div class="modal-body">
           <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;margin-bottom:20px">
-            <div style="text-align:center;font-weight:700;font-size:.9rem">${match.team1_squad || match.team1_name || 'Time 1'}</div>
+            <div style="text-align:center;font-weight:700;font-size:.9rem">${esc(match.team1_squad || match.team1_name || 'Time 1')}</div>
             <div style="text-align:center;color:var(--text-muted);font-weight:700">VS</div>
-            <div style="text-align:center;font-weight:700;font-size:.9rem">${match.team2_squad || match.team2_name || 'Time 2'}</div>
+            <div style="text-align:center;font-weight:700;font-size:.9rem">${esc(match.team2_squad || match.team2_name || 'Time 2')}</div>
           </div>
           <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center">
             <input type="number" class="form-control" id="mr-score1" min="0" placeholder="0" style="text-align:center;font-size:1.5rem;font-weight:800">
@@ -153,7 +153,7 @@ window.openMatchResultModal = function(match) {
             </div>
             <div class="form-group">
               <label class="form-label">Quadra</label>
-              <input type="text" class="form-control" id="mr-court" value="${match.court || ''}" placeholder="Ex: Quadra 1">
+              <input type="text" class="form-control" id="mr-court" value="${esc(match.court || '')}" placeholder="Ex: Quadra 1">
             </div>
           </div>
           <div class="form-group" style="margin-top:4px">
@@ -167,10 +167,10 @@ window.openMatchResultModal = function(match) {
             <div class="form-label">Vencedor</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">
               <button class="btn btn-outline" id="win-t1" onclick="selectWinner('t1', ${match.team1_reg_id}, ${match.team2_reg_id})">
-                ${match.team1_squad || match.team1_name || 'Time 1'}
+                ${esc(match.team1_squad || match.team1_name || 'Time 1')}
               </button>
               <button class="btn btn-outline" id="win-t2" onclick="selectWinner('t2', ${match.team1_reg_id}, ${match.team2_reg_id})">
-                ${match.team2_squad || match.team2_name || 'Time 2'}
+                ${esc(match.team2_squad || match.team2_name || 'Time 2')}
               </button>
             </div>
           </div>
