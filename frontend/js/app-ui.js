@@ -178,10 +178,10 @@ window.renderDashboard = async function(el) {
 
         <!-- Stats -->
         <div class="stats-row" style="margin-bottom:20px">
-          <div class="stat-card orange"><div class="stat-value">${myEvents.length}</div><div class="stat-label">Eventos criados</div></div>
-          <div class="stat-card"><div class="stat-value">${totalReg}</div><div class="stat-label">Total inscritos</div></div>
-          <div class="stat-card green"><div class="stat-value">${totalPaid}</div><div class="stat-label">Pag. confirmados</div></div>
-          <div class="stat-card"><div class="stat-value">${notifData.unread_count || 0}</div><div class="stat-label">Notificações</div></div>
+          <div class="stat-card"><div class="stat-icon stat-icon-orange">🏆</div><div><div class="stat-value">${myEvents.length}</div><div class="stat-label">Eventos criados</div></div></div>
+          <div class="stat-card"><div class="stat-icon stat-icon-black">👥</div><div><div class="stat-value">${totalReg}</div><div class="stat-label">Total inscritos</div></div></div>
+          <div class="stat-card"><div class="stat-icon stat-icon-military">💰</div><div><div class="stat-value">${totalPaid}</div><div class="stat-label">Pag. confirmados</div></div></div>
+          <div class="stat-card"><div class="stat-icon stat-icon-orange">🔔</div><div><div class="stat-value">${notifData.unread_count || 0}</div><div class="stat-label">Notificações</div></div></div>
         </div>
 
         <!-- Ações rápidas -->

@@ -156,11 +156,11 @@ html {
 }
 
 /* ── HEADER SCROLL SHADOW ── */
-.navbar {
+.topbar {
   transition: box-shadow .2s ease;
 }
-.navbar.scrolled {
-  box-shadow: 0 2px 16px rgba(0,0,0,.3);
+.topbar.scrolled {
+  box-shadow: 0 2px 16px rgba(0,0,0,.1);
 }
 
 /* ── FORM VALIDATION COLORS ── */
@@ -211,21 +211,8 @@ html {
 }
 
 /* ── SAFE AREA FIX (iPhone notch) ── */
-.navbar { padding-top: env(safe-area-inset-top, 0); }
+.topbar { padding-top: env(safe-area-inset-top, 0); }
 .auth-page { padding-top: max(24px, env(safe-area-inset-top, 24px)); }
-
-/* ── SCROLLED NAVBAR ── */
-window.addEventListener?.('scroll', () => {
-  const nav = document.querySelector('.navbar');
-  if (nav) nav.classList.toggle('scrolled', window.scrollY > 10);
-});
-
-/* ── MODAL OVERLAY CLICK-OUTSIDE CLOSE ── */
-document.addEventListener?.('click', (e) => {
-  if (e.target.classList.contains('modal-overlay')) {
-    e.target.remove();
-  }
-});
 
 /* ── PREVENT DOUBLE-TAP ZOOM ── */
 * { touch-action: manipulation; }

@@ -1,33 +1,12 @@
 /* PlayGAME — Components CSS (components.css) */
 /* Complementa style.css com componentes adicionais */
 
-/* ── SEARCH BAR ── */
-.nav-search-btn {
-  background: var(--gray-mid); border: none; color: var(--white);
-  width: 38px; height: 38px; border-radius: 50%;
-  cursor: pointer; display: flex; align-items: center; justify-content: center;
-  font-size: 1rem; transition: background var(--transition);
-}
-.nav-search-btn:hover { background: var(--gray-dark); }
-.search-bar {
-  background: var(--gray-dark); padding: 10px 12px;
-  border-top: 1px solid rgba(255,255,255,.08);
-  animation: fadeIn .15s ease;
-}
-.search-bar-inner {
-  display: flex; align-items: center; gap: 8px;
-  background: rgba(255,255,255,.08); border-radius: var(--radius-sm);
-  padding: 8px 12px;
-}
-.search-input {
-  flex: 1; background: none; border: none; outline: none;
-  color: var(--white); font-size: .9rem; font-family: 'Barlow', sans-serif;
-}
-.search-input::placeholder { color: rgba(255,255,255,.4); }
+/* Search bar styles are in style.css */
 .search-close {
-  background: none; border: none; color: rgba(255,255,255,.5);
+  background: none; border: none; color: var(--gray-500);
   cursor: pointer; font-size: 1rem; padding: 2px;
 }
+.search-close:hover { color: var(--black); }
 
 /* ── BOTTOM NAV CENTER BUTTON ── */
 .bottom-nav-center {
@@ -39,8 +18,8 @@
   width: 48px; height: 48px; background: var(--orange);
   border-radius: 50%; display: flex; align-items: center;
   justify-content: center; font-size: 1.3rem;
-  box-shadow: 0 4px 14px rgba(232,119,34,.45);
-  margin-top: -16px; border: 3px solid var(--white);
+  box-shadow: 0 4px 14px rgba(240,90,26,.45);
+  margin-top: -16px; border: 3px solid var(--black);
   color: var(--white);
 }
 .bottom-nav-center .nav-label { font-size: .65rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .03em; }
@@ -48,7 +27,7 @@
 
 /* ── HERO BANNER ── */
 .hero-banner {
-  background: linear-gradient(135deg, #0a0a0a 0%, #1a2a14 50%, #0a0a0a 100%);
+  background: linear-gradient(135deg, var(--black) 0%, var(--military-dark) 50%, var(--black) 100%);
   padding: 28px 16px 24px; position: relative; overflow: hidden;
 }
 .hero-banner::after {
