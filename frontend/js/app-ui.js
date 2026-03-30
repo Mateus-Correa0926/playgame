@@ -1,24 +1,5 @@
 // PlayGAME — UI Enhancements (app-ui.js)
-// Sobrescreve renderHome e renderDashboard com versões visuais aprimoradas
-
-// ── COUNTDOWN TIMER ──
-function buildCountdown(eventDate, startTime) {
-  const target = new Date(`${eventDate}T${startTime || '00:00'}`);
-  const now = new Date();
-  const diff = target - now;
-  if (diff <= 0) return '<div class="alert alert-info"><span class="alert-icon">ℹ️</span>Este evento já ocorreu ou está acontecendo agora.</div>';
-  const days = Math.floor(diff / 86400000);
-  const hours = Math.floor((diff % 86400000) / 3600000);
-  const mins = Math.floor((diff % 3600000) / 60000);
-  return `
-    <div class="countdown">
-      <div class="countdown-unit"><span class="countdown-val">${String(days).padStart(2,'0')}</span><span class="countdown-label">dias</span></div>
-      <span class="countdown-sep">:</span>
-      <div class="countdown-unit"><span class="countdown-val">${String(hours).padStart(2,'0')}</span><span class="countdown-label">horas</span></div>
-      <span class="countdown-sep">:</span>
-      <div class="countdown-unit"><span class="countdown-val">${String(mins).padStart(2,'0')}</span><span class="countdown-label">min</span></div>
-    </div>`;
-}
+// Overrides renderHome and renderDashboard to match JSX design system
 
 // ── SKELETON CARDS ──
 function buildSkeletonCards(n = 3) {
@@ -30,101 +11,71 @@ window.renderHome = async function(el) {
   const user = getUser();
   if (user?.role === 'organizador') return renderDashboard(el);
 
-  // Skeleton primeiro
-  el.innerHTML = `
-    <div class="hero-banner">
-      <div class="hero-greeting">Bem-vindo de volta</div>
-      <div class="hero-name">${user ? user.name.split(' ')[0] + '! 👋' : 'PlayGAME 🏖'}</div>
-      <div class="hero-sub">Encontre eventos de areia perto de você</div>
-    </div>
-    <div class="container" style="padding-top:16px">
-      <div class="events-grid">${buildSkeletonCards(3)}</div>
-    </div>`;
+  el.innerHTML = `<div class="stats-grid">${buildSkeletonCards(4)}</div>`;
 
   try {
-    const events = await apiFetch('/events');
+    const [events, myRegs] = await Promise.all([
+      apiFetch('/events'),
+      apiFetch('/registrations/my').catch(() => [])
+    ]);
     if (!events) return;
 
-    const upcoming = events.filter(e => new Date(e.event_date) >= new Date()).length;
-    const confirmed = events.filter(e => e.status === 'confirmado').length;
+    const confirmedEvents = events.filter(e => e.status === 'confirmado').length;
+    const pendingEvents = events.filter(e => e.status === 'pendente').length;
+    const totalAthletes = events.reduce((a, e) => a + (parseInt(e.total_registered) || 0), 0);
+    const myRegistrations = Array.isArray(myRegs) ? myRegs.length : 0;
 
-    const modalityGroups = [
-      { key: 'volei', icon: '🏐', label: 'Vôlei' },
-      { key: 'futevolei', icon: '⚽', label: 'Futevôlei' },
-      { key: 'beach_tennis', icon: '🎾', label: 'Beach Tennis' }
-    ];
-
-    const modChips = [
-      `<div class="modality-chip active" data-filter="todos"><div class="mod-icon">🏖</div><div class="mod-label">Todos</div></div>`,
-      ...modalityGroups.map(m => `<div class="modality-chip" data-filter="${m.key}"><div class="mod-icon">${m.icon}</div><div class="mod-label">${m.label}</div></div>`)
-    ].join('');
-
-    const cards = events.map(e => buildEventCard(e)).join('');
+    const cards = events.slice(0, 8).map(e => buildEventCard(e)).join('');
 
     el.innerHTML = `
-      <div class="hero-banner">
-        <div class="hero-greeting">Bem-vindo de volta</div>
-        <div class="hero-name">${user ? user.name.split(' ')[0] + '! 👋' : 'PlayGAME 🏖'}</div>
-        <div class="hero-sub">Encontre eventos de areia perto de você</div>
-        <div class="hero-stats">
-          <div class="hero-stat"><div class="hero-stat-val">${upcoming}</div><div class="hero-stat-label">Próximos</div></div>
-          <div class="hero-stat"><div class="hero-stat-val">${confirmed}</div><div class="hero-stat-label">Confirmados</div></div>
-          <div class="hero-stat"><div class="hero-stat-val">${events.length}</div><div class="hero-stat-label">Total</div></div>
+      <div style="margin-bottom:24px">
+        <h2 style="font-family:var(--font-display);font-size:28px;font-weight:900;text-transform:uppercase">
+          Olá, ${user ? user.name.split(' ')[0] : 'Visitante'}! 👋
+        </h2>
+        <p style="color:var(--gray-500);margin-top:4px">Aqui está seu resumo de hoje.</p>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-orange">🏅</div>
+          <div><div class="stat-value">${myRegistrations}</div><div class="stat-label">Minhas Inscrições</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-military">✓</div>
+          <div><div class="stat-value">${confirmedEvents}</div><div class="stat-label">Eventos Disponíveis</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-black">👥</div>
+          <div><div class="stat-value">${totalAthletes}</div><div class="stat-label">Atletas na Plataforma</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-orange">🏆</div>
+          <div><div class="stat-value">${pendingEvents}</div><div class="stat-label">Em Andamento</div></div>
         </div>
       </div>
 
-      <div class="container" style="padding-top:16px">
-        <div class="quick-actions">
-          <a class="quick-action" href="#/eventos"><div class="qa-icon">🏆</div><div class="qa-label">Eventos</div></a>
-          <a class="quick-action" href="#/minhas-inscricoes"><div class="qa-icon">📋</div><div class="qa-label">Inscrições</div></a>
-          <a class="quick-action" href="#/arenas"><div class="qa-icon">🏟</div><div class="qa-label">Arenas</div></a>
-          <a class="quick-action" href="#/perfil"><div class="qa-icon">👤</div><div class="qa-label">Perfil</div></a>
-        </div>
-
-        <div class="section-header mb-12">
-          <div class="section-title">Modalidades</div>
-        </div>
-        <div class="modality-scroll mb-12">${modChips}</div>
-
-        <div class="section-header mb-12">
-          <div class="section-title">Eventos disponíveis</div>
-          <a href="#/eventos" style="font-size:.82rem;color:var(--orange);text-decoration:none;font-weight:600">Ver todos →</a>
-        </div>
-        <div class="events-grid" id="events-grid">
-          ${cards || `<div class="empty-state" style="grid-column:1/-1"><div class="icon">🏖</div><p>Nenhum evento disponível no momento.</p></div>`}
-        </div>
-      </div>`;
-
-    // Bind modality chips
-    document.querySelectorAll('.modality-chip').forEach(chip => {
-      chip.addEventListener('click', () => {
-        document.querySelectorAll('.modality-chip').forEach(c => c.classList.remove('active'));
-        chip.classList.add('active');
-        const f = chip.getAttribute('data-filter');
-        document.querySelectorAll('.event-card').forEach(card => {
-          const mod = card.getAttribute('data-modality') || '';
-          card.style.display = (f === 'todos' || mod.includes(f)) ? '' : 'none';
-        });
-      });
-    });
+      <div class="section-header">
+        <div class="section-title">Eventos Disponíveis</div>
+        <a href="#/eventos" style="font-size:13px;color:var(--orange);text-decoration:none;font-weight:600">Ver todos →</a>
+      </div>
+      ${events.length === 0
+        ? `<div class="card" style="padding:24px"><div class="empty-state">
+            <div class="empty-state-icon" style="font-size:48px">🏆</div>
+            <div class="empty-state-title">Nenhuma inscrição</div>
+            <p style="color:var(--gray-300);font-size:14px">Explore os eventos disponíveis e se inscreva!</p>
+          </div></div>`
+        : `<div class="events-grid">${cards}</div>`
+      }`;
 
   } catch (err) {
-    el.innerHTML = `<div class="container" style="padding-top:20px"><div class="alert alert-error"><span class="alert-icon">⚠️</span>${err.message}</div></div>`;
+    el.innerHTML = `<div class="empty-state"><p>${err.message}</p></div>`;
   }
 };
 
 // ── ENHANCED DASHBOARD (ORGANIZADOR) ──
 window.renderDashboard = async function(el) {
   const user = getUser();
-  el.innerHTML = `
-    <div class="hero-banner">
-      <div class="hero-greeting">Painel do Organizador</div>
-      <div class="hero-name">${user?.name?.split(' ')[0]}! 📋</div>
-      <div class="hero-sub">Gerencie seus eventos de areia</div>
-    </div>
-    <div class="container" style="padding-top:16px">
-      <div class="events-grid">${buildSkeletonCards(2)}</div>
-    </div>`;
+  el.innerHTML = `<div class="stats-grid">${buildSkeletonCards(4)}</div>`;
 
   try {
     const [eventsAll, orgEvents, notifData] = await Promise.all([
@@ -134,99 +85,69 @@ window.renderDashboard = async function(el) {
     ]);
 
     const myEvents = orgEvents || (eventsAll || []).filter(e => e.organizer_id === user?.id);
-    const totalReg = myEvents.reduce((a, e) => a + (parseInt(e.total_registered) || 0), 0);
-    const totalPaid = myEvents.reduce((a, e) => a + (parseInt(e.total_paid) || 0), 0);
-    const totalRevenue = myEvents.reduce((a, e) => a + ((parseInt(e.total_paid) || 0) * parseFloat(e.registration_fee || 0)), 0);
-    const unreadComments = myEvents.reduce((a, e) => a + (parseInt(e.unread_comments) || 0), 0);
-    const pendingConfirm = myEvents.filter(e => !e.arena_confirmed).length;
+    const totalInscritos = myEvents.reduce((a, e) => a + (parseInt(e.total_registered) || 0), 0);
+    const confirmedCount = myEvents.filter(e => e.status === 'confirmado').length;
+    const pendingCount = myEvents.filter(e => e.status === 'pendente').length;
 
-    const eventRows = myEvents.map(e => `
-      <div class="dash-event-row" onclick="navigate('#/eventos/${e.id}')">
-        <div class="dash-event-dot ${e.status}"></div>
-        <div class="dash-event-info">
-          <div class="dash-event-title">${e.title}</div>
-          <div class="dash-event-meta">${formatDate(e.event_date)} • ${e.arena_name || 'Arena'} • ${getModalityLabel(e.modality)}</div>
-        </div>
-        <div class="dash-event-badges">
-          ${(e.unread_comments > 0) ? `<span class="dash-mini-badge badge-comment">💬 ${e.unread_comments}</span>` : ''}
-          <span class="dash-mini-badge badge-reg">👥 ${e.total_paid || 0}/${e.participant_limit}</span>
-        </div>
-      </div>`).join('') || `
-      <div class="empty-state">
-        <div class="icon">📋</div>
-        <p>Você ainda não criou nenhum evento.</p>
-        <a href="#/criar-evento" class="btn btn-primary" style="margin-top:14px">Criar primeiro evento</a>
-      </div>`;
+    const cards = myEvents.slice(0, 4).map(e => buildEventCard(e)).join('');
 
     el.innerHTML = `
-      <div class="hero-banner">
-        <div class="hero-greeting">Painel do Organizador</div>
-        <div class="hero-name">${user?.name?.split(' ')[0]}! 📋</div>
-        <div class="hero-sub">Gerencie seus eventos de areia</div>
-        <div class="hero-stats">
-          <div class="hero-stat"><div class="hero-stat-val">${myEvents.length}</div><div class="hero-stat-label">Eventos</div></div>
-          <div class="hero-stat"><div class="hero-stat-val">${totalPaid}</div><div class="hero-stat-label">Pagos</div></div>
-          <div class="hero-stat"><div class="hero-stat-val">${formatCurrency(totalRevenue)}</div><div class="hero-stat-label">Receita</div></div>
+      <div style="margin-bottom:24px">
+        <h2 style="font-family:var(--font-display);font-size:28px;font-weight:900;text-transform:uppercase">
+          Olá, ${user?.name?.split(' ')[0]}! 👋
+        </h2>
+        <p style="color:var(--gray-500);margin-top:4px">Aqui está seu resumo de hoje.</p>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-orange">🏆</div>
+          <div><div class="stat-value">${myEvents.length}</div><div class="stat-label">Meus Eventos</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-military">✓</div>
+          <div><div class="stat-value">${confirmedCount}</div><div class="stat-label">Confirmados</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-black">👥</div>
+          <div><div class="stat-value">${totalInscritos}</div><div class="stat-label">Inscrições</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-orange">🔔</div>
+          <div><div class="stat-value">${pendingCount}</div><div class="stat-label">Pendentes Arena</div></div>
         </div>
       </div>
 
-      <div class="container" style="padding-top:16px">
-
-        <!-- Alertas -->
-        ${unreadComments > 0 ? `<div class="alert alert-warn"><span class="alert-icon">💬</span>Você tem <strong>${unreadComments}</strong> comentário(s) não lido(s) em seus eventos.</div>` : ''}
-        ${pendingConfirm > 0 ? `<div class="alert alert-info"><span class="alert-icon">⏳</span><strong>${pendingConfirm}</strong> evento(s) aguardando confirmação da arena.</div>` : ''}
-
-        <!-- Stats -->
-        <div class="stats-row" style="margin-bottom:20px">
-          <div class="stat-card"><div class="stat-icon stat-icon-orange">🏆</div><div><div class="stat-value">${myEvents.length}</div><div class="stat-label">Eventos criados</div></div></div>
-          <div class="stat-card"><div class="stat-icon stat-icon-black">👥</div><div><div class="stat-value">${totalReg}</div><div class="stat-label">Total inscritos</div></div></div>
-          <div class="stat-card"><div class="stat-icon stat-icon-military">💰</div><div><div class="stat-value">${totalPaid}</div><div class="stat-label">Pag. confirmados</div></div></div>
-          <div class="stat-card"><div class="stat-icon stat-icon-orange">🔔</div><div><div class="stat-value">${notifData.unread_count || 0}</div><div class="stat-label">Notificações</div></div></div>
-        </div>
-
-        <!-- Ações rápidas -->
-        <div class="quick-actions" style="margin-bottom:20px">
-          <a class="quick-action" href="#/criar-evento"><div class="qa-icon">➕</div><div class="qa-label">Criar evento</div></a>
-          <a class="quick-action" href="#/arenas"><div class="qa-icon">🏟</div><div class="qa-label">Arenas</div></a>
-          <a class="quick-action" href="#/eventos"><div class="qa-icon">🏆</div><div class="qa-label">Ver todos</div></a>
-          <a class="quick-action" href="#/perfil"><div class="qa-icon">👤</div><div class="qa-label">Perfil</div></a>
-        </div>
-
-        <!-- Lista de eventos -->
-        <div class="section-header mb-12">
-          <div class="section-title">Meus Eventos</div>
-          <a href="#/criar-evento" class="btn btn-primary btn-sm">+ Novo</a>
-        </div>
-        ${eventRows}
-      </div>`;
+      <div class="section-header">
+        <div class="section-title">Eventos Recentes</div>
+        <a href="#/criar-evento" class="btn btn-primary btn-sm">+ Novo</a>
+      </div>
+      ${myEvents.length === 0
+        ? `<div class="card" style="padding:24px"><div class="empty-state">
+            <div class="empty-state-icon" style="font-size:48px">🏆</div>
+            <div class="empty-state-title">Nenhum evento criado</div>
+            <p style="color:var(--gray-300);font-size:14px">Crie seu primeiro evento para começar.</p>
+          </div></div>`
+        : `<div class="events-grid">${cards}</div>`
+      }`;
 
   } catch (err) {
-    el.innerHTML = `<div class="container" style="padding-top:20px"><div class="alert alert-error"><span class="alert-icon">⚠️</span>${err.message}</div></div>`;
+    el.innerHTML = `<div class="empty-state"><p>${err.message}</p></div>`;
   }
-};
-
-// ── ENHANCED EVENT DETAIL — INFO SECTION ──
-// Adds countdown, share button and info grid to detail view
-const originalRenderEventDetail = window.renderEventDetail;
-window.renderEventDetail = async function(el, id) {
-  // Use the original and then enhance
-  await originalRenderEventDetail(el, id);
 };
 
 // ── SHARE EVENT ──
 window.shareEvent = async function(title, id) {
   const url = `${window.location.origin}/#/eventos/${id}`;
   if (navigator.share) {
-    try {
-      await navigator.share({ title: `PlayGAME — ${title}`, url });
-    } catch (e) {}
+    try { await navigator.share({ title: 'PlayGAME — ' + title, url }); } catch (e) {}
   } else {
     await navigator.clipboard.writeText(url);
     toast('Link copiado!', 'success');
   }
 };
 
-// ── PULL TO REFRESH INDICATOR ──
+// ── PULL TO REFRESH ──
 (function pullToRefresh() {
   let startY = 0, indicator = null;
   document.addEventListener('touchstart', e => { startY = e.touches[0].clientY; }, { passive: true });
@@ -244,12 +165,7 @@ window.shareEvent = async function(title, id) {
     if (indicator) { indicator.remove(); indicator = null; }
     if (dy > 100 && window.scrollY === 0) {
       toast('Atualizando...', 'info');
-      setTimeout(() => {
-        const content = document.getElementById('page-content');
-        if (content) renderPage(window.location.hash || '#/');
-      }, 400);
+      setTimeout(() => { renderPage(window.location.hash || '#/'); }, 400);
     }
   }, { passive: true });
 })();
-
-console.log('🏖 PlayGAME UI Enhancements loaded');

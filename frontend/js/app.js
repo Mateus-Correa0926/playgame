@@ -456,61 +456,85 @@ async function renderHome(el) {
 }
 
 function buildHomeHTML(events, user) {
-  const greeting = user ? `Olá, ${user.name.split(' ')[0]}! 👋` : 'Eventos disponíveis 🏖';
-  const upcomingCount = events.filter(e => new Date(e.event_date) >= new Date()).length;
+  const confirmedEvents = events.filter(e => e.status === 'confirmado').length;
+  const pendingEvents = events.filter(e => e.status === 'pendente').length;
+  const totalAthletes = events.reduce((a, e) => a + (parseInt(e.total_registered) || 0), 0);
 
-  const filters = ['Todos', 'Vôlei', 'Futevôlei', 'Beach Tennis'];
-  const filterChips = filters.map((f, i) => `<button class="filter-chip ${i === 0 ? 'active' : ''}" data-filter="${f}">${f}</button>`).join('');
-
-  const cards = events.map(e => buildEventCard(e)).join('');
+  const cards = events.slice(0, 8).map(e => buildEventCard(e)).join('');
 
   return `
-    <div style="background:var(--black);padding:20px 16px 18px;margin-bottom:0">
-      <div class="container" style="padding:0">
-        <div style="color:var(--text-muted);font-size:.82rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px">PlayGAME</div>
-        <h1 style="color:var(--white);font-size:1.6rem;margin-bottom:4px">${greeting}</h1>
-        <p style="color:var(--text-muted);font-size:.85rem">${upcomingCount} evento(s) disponível(is)</p>
+    <div style="margin-bottom:24px">
+      <h2 style="font-family:var(--font-display);font-size:28px;font-weight:900;text-transform:uppercase">
+        Olá, ${user ? user.name.split(' ')[0] : 'Visitante'}! 👋
+      </h2>
+      <p style="color:var(--gray-500);margin-top:4px">Aqui está seu resumo de hoje.</p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon stat-icon-orange">🏅</div>
+        <div><div class="stat-value">0</div><div class="stat-label">Minhas Inscrições</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon stat-icon-military">✓</div>
+        <div><div class="stat-value">${confirmedEvents}</div><div class="stat-label">Eventos Disponíveis</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon stat-icon-black">👥</div>
+        <div><div class="stat-value">${totalAthletes}</div><div class="stat-label">Atletas na Plataforma</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon stat-icon-orange">🏆</div>
+        <div><div class="stat-value">${pendingEvents}</div><div class="stat-label">Em Andamento</div></div>
       </div>
     </div>
-    <div class="container" style="padding-top:16px">
-      <div class="filter-bar">${filterChips}</div>
-      <div class="events-grid" id="events-grid">
-        ${cards || `<div class="empty-state" style="grid-column:1/-1"><div class="icon">🏖</div><p>Nenhum evento disponível</p></div>`}
-      </div>
+
+    <div class="section-header">
+      <div class="section-title">Eventos Disponíveis</div>
+      <a href="#/eventos" style="font-size:13px;color:var(--orange);text-decoration:none;font-weight:600">Ver todos →</a>
+    </div>
+    <div class="events-grid">
+      ${cards || `<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon" style="font-size:48px">🏆</div><div class="empty-state-title">Nenhum evento disponível</div></div>`}
     </div>`;
 }
 
 function buildEventCard(e) {
   const status = e.status || 'pendente';
   const paid = parseInt(e.total_paid) || 0;
-  const reg = parseInt(e.total_registered) || 0;
   const limit = parseInt(e.participant_limit) || 0;
-  const spotsLeft = Math.max(0, limit - paid);
   const pctFull = limit > 0 ? Math.min(100, Math.round(paid / limit * 100)) : 0;
+  const statusMap = {
+    confirmado: { cls: 'badge-confirmed', text: '✓ Confirmado' },
+    pendente: { cls: 'badge-pending', text: '⏳ Pendente' },
+    cancelado: { cls: 'badge-rejected', text: '✕ Rejeitado' },
+    encerrado: { cls: 'badge-rejected', text: 'Encerrado' },
+  };
+  const st = statusMap[status] || { cls: 'badge-pending', text: status };
 
   return `
-    <div class="card event-card" data-modality="${e.modality}" onclick="navigate('#/eventos/${e.id}')">
-      <div class="event-card-banner">
-        ${e.banner ? `<img src="${e.banner}" alt="">` : ''}
-        <span class="event-modality-badge">${getModalityLabel(e.modality)}</span>
+    <div class="event-card" data-modality="${e.modality}" onclick="navigate('#/eventos/${e.id}')">
+      <div class="event-card-header">
+        ${e.banner ? `<img src="${e.banner}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1">` : ''}
+        <div class="event-card-header-content">
+          <span class="event-modality-badge">${getModalityLabel(e.modality)}</span>
+        </div>
       </div>
       <div class="event-card-body">
         <div class="event-card-title">${e.title}</div>
-        <div class="event-card-meta">
-          <div class="event-meta-row"><span class="icon">📅</span>${formatDate(e.event_date)} • ${(e.start_time||'').slice(0,5)}</div>
-          <div class="event-meta-row"><span class="icon">📍</span>${e.arena_name}, ${e.arena_city}</div>
-          <div class="event-meta-row"><span class="icon">👥</span>${paid} confirmados / ${limit} vagas</div>
+        <div class="event-meta">
+          <div class="event-meta-item">📅 ${formatDate(e.event_date)}${e.start_time ? ' • ' + (e.start_time||'').slice(0,5) : ''}</div>
+          <div class="event-meta-item">📍 ${e.arena_name || 'Arena'}${e.arena_city ? ', ' + e.arena_city : ''}</div>
+          <div class="event-meta-item">👥 ${paid} / ${limit} times</div>
         </div>
-        <div style="margin-top:10px">
-          <div style="height:4px;background:var(--gray-border);border-radius:4px;overflow:hidden">
-            <div style="height:100%;width:${pctFull}%;background:${pctFull>=90?'var(--red)':'var(--orange)'};transition:width .3s"></div>
-          </div>
-          <div style="font-size:.72rem;color:var(--text-muted);margin-top:3px">${spotsLeft} vaga(s) confirmada(s) disponível(is)</div>
-        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pctFull}%"></div></div>
+        <div style="font-size:11px;color:var(--gray-300);margin-top:4px;text-align:right">${pctFull}% preenchido</div>
       </div>
-      <div class="event-card-footer">
-        <div class="event-price">${formatCurrency(e.registration_fee)}</div>
-        <div class="event-status"><span class="status-pill status-${status}">${status}</span></div>
+      <div class="event-card-footer" style="padding:14px 20px 16px">
+        <div>
+          <span class="event-price-label">Inscrição</span>
+          <span class="event-price">${formatCurrency(e.registration_fee)}</span>
+        </div>
+        <span class="badge ${st.cls}">${st.text}</span>
       </div>
     </div>`;
 }
@@ -974,44 +998,62 @@ async function renderMyRegistrations(el) {
 
 // ── DASHBOARD (organizador) ──
 async function renderDashboard(el) {
-  el.innerHTML = `<div class="container"><div class="loading"><div class="spinner"></div></div></div>`;
+  el.innerHTML = `<div class="stats-grid">${Array(4).fill('<div class="skeleton skel-card" style="height:80px"></div>').join('')}</div>`;
   try {
     const [events, notifs] = await Promise.all([
       apiFetch('/events'),
-      apiFetch('/notifications')
+      apiFetch('/notifications').catch(() => ({ notifications: [], unread_count: 0 }))
     ]);
     if (!events) return;
     const user = getUser();
     const myEvents = events.filter(e => e.organizer_id === user?.id);
-    const totalRegs = myEvents.reduce((a, e) => a + (parseInt(e.total_registered)||0), 0);
-    const totalPaid = myEvents.reduce((a, e) => a + (parseInt(e.total_paid)||0), 0);
-    const pending = (notifs?.notifications || []).filter(n => !n.is_read).length;
+    const totalInscritos = myEvents.reduce((a, e) => a + (parseInt(e.total_registered)||0), 0);
+    const confirmedCount = myEvents.filter(e => e.status === 'confirmado').length;
+    const pendingCount = myEvents.filter(e => e.status === 'pendente').length;
+
+    const cards = myEvents.slice(0, 4).map(e => buildEventCard(e)).join('');
 
     el.innerHTML = `
-      <div style="background:var(--black);padding:20px 16px 18px">
-        <div class="container" style="padding:0">
-          <div style="color:var(--orange);font-size:.78rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase">Painel do Organizador</div>
-          <h1 style="color:var(--white);font-size:1.6rem;margin-top:4px">Olá, ${user?.name?.split(' ')[0]}!</h1>
+      <div style="margin-bottom:24px">
+        <h2 style="font-family:var(--font-display);font-size:28px;font-weight:900;text-transform:uppercase">
+          Olá, ${user?.name?.split(' ')[0]}! 👋
+        </h2>
+        <p style="color:var(--gray-500);margin-top:4px">Aqui está seu resumo de hoje.</p>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-orange">🏆</div>
+          <div><div class="stat-value">${myEvents.length}</div><div class="stat-label">Meus Eventos</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-military">✓</div>
+          <div><div class="stat-value">${confirmedCount}</div><div class="stat-label">Confirmados</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-black">👥</div>
+          <div><div class="stat-value">${totalInscritos}</div><div class="stat-label">Inscrições</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-orange">🔔</div>
+          <div><div class="stat-value">${pendingCount}</div><div class="stat-label">Pendentes Arena</div></div>
         </div>
       </div>
-      <div class="container" style="padding-top:16px">
-        <div class="stats-row">
-          <div class="stat-card"><div class="stat-icon stat-icon-orange">🏆</div><div><div class="stat-value">${myEvents.length}</div><div class="stat-label">Eventos</div></div></div>
-          <div class="stat-card"><div class="stat-icon stat-icon-black">👥</div><div><div class="stat-value">${totalRegs}</div><div class="stat-label">Inscritos</div></div></div>
-          <div class="stat-card"><div class="stat-icon stat-icon-military">💰</div><div><div class="stat-value">${totalPaid}</div><div class="stat-label">Pagamentos</div></div></div>
-          <div class="stat-card"><div class="stat-icon stat-icon-orange">🔔</div><div><div class="stat-value">${pending}</div><div class="stat-label">Notificações</div></div></div>
-        </div>
 
-        <div class="section-header">
-          <div class="section-title">Meus Eventos</div>
-          <a href="#/criar-evento" class="btn btn-primary btn-sm">+ Novo evento</a>
-        </div>
-        <div class="events-grid">
-          ${myEvents.map(e => buildEventCard(e)).join('') || '<div class="empty-state" style="grid-column:1/-1"><div class="icon">📋</div><p>Nenhum evento criado ainda.</p><a href="#/criar-evento" class="btn btn-primary" style="margin-top:12px">Criar primeiro evento</a></div>'}
-        </div>
-      </div>`;
+      <div class="section-header">
+        <div class="section-title">Eventos Recentes</div>
+        <a href="#/criar-evento" class="btn btn-primary btn-sm">+ Novo</a>
+      </div>
+      ${myEvents.length === 0
+        ? `<div class="card" style="padding:24px"><div class="empty-state">
+            <div class="empty-state-icon" style="font-size:48px">🏆</div>
+            <div class="empty-state-title">Nenhum evento criado</div>
+            <p style="color:var(--gray-300);font-size:14px">Crie seu primeiro evento para começar.</p>
+          </div></div>`
+        : `<div class="events-grid">${cards}</div>`
+      }`;
   } catch (err) {
-    el.innerHTML = `<div class="container"><div class="empty-state"><p>${err.message}</p></div></div>`;
+    el.innerHTML = `<div class="empty-state"><p>${err.message}</p></div>`;
   }
 }
 
