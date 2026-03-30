@@ -26,6 +26,7 @@ app.use('/api/events',        require('./routes/events-extended'));
 app.use('/api/events',        require('./routes/events'));
 app.use('/api/registrations', require('./routes/registrations'));
 app.use('/api/users',         require('./routes/users'));
+app.use('/api/invites',       require('./routes/invites'));
 app.use('/api/arenas',        require('./routes/arenas'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/payments',      require('./routes/payments'));
