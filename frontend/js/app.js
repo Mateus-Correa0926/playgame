@@ -43,7 +43,8 @@ function timeAgo(dateStr) {
 
 function formatDate(d) {
   if (!d) return '';
-  return new Date(d + 'T00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' });
+  const str = String(d).slice(0, 10);
+  return new Date(str + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' });
 }
 
 function formatCurrency(v) {
@@ -140,7 +141,7 @@ function updateNav() {
   const titleEl = $('#topbar-title');
   if (titleEl) {
     const titleMap = {
-      '#/': user.role === 'organizador' ? 'Dashboard' : 'Início',
+      '#/': user.role === 'organizador' ? 'Meus Eventos' : 'Eventos',
       '#/eventos': 'Eventos',
       '#/criar-evento': 'Novo Evento',
       '#/minhas-inscricoes': 'Minhas Inscrições',
@@ -228,7 +229,7 @@ function renderPage(hash) {
   if (hash === '#/arenas') return renderArenas(content);
   if (hash === '#/dashboard') return renderDashboard(content);
 
-  content.innerHTML = `<div class="container"><div class="empty-state"><div class="icon">🏄</div><p>Página não encontrada.</p></div></div>`;
+  content.innerHTML = `<div class="container"><div class="empty-state"><p>Página não encontrada.</p></div></div>`;
 }
 
 // ── AUTH PAGES ──
@@ -456,45 +457,15 @@ async function renderHome(el) {
 }
 
 function buildHomeHTML(events, user) {
-  const confirmedEvents = events.filter(e => e.status === 'confirmado').length;
-  const pendingEvents = events.filter(e => e.status === 'pendente').length;
-  const totalAthletes = events.reduce((a, e) => a + (parseInt(e.total_registered) || 0), 0);
-
-  const cards = events.slice(0, 8).map(e => buildEventCard(e)).join('');
+  const cards = events.map(e => buildEventCard(e)).join('');
 
   return `
-    <div style="margin-bottom:24px">
-      <h2 style="font-family:var(--font-display);font-size:28px;font-weight:900;text-transform:uppercase">
-        Olá, ${user ? user.name.split(' ')[0] : 'Visitante'}!
-      </h2>
-      <p style="color:var(--gray-500);margin-top:4px">Aqui está seu resumo de hoje.</p>
-    </div>
-
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-icon stat-icon-orange"></div>
-        <div><div class="stat-value">0</div><div class="stat-label">Minhas Inscrições</div></div>
+    <div class="page-header"><div class="container"><h1>Eventos</h1><p>Encontre torneios para participar</p></div></div>
+    <div class="container">
+      <div class="filter-bar">${['Todos','Vôlei','Futevôlei','Beach Tennis'].map((f,i) => `<button class="filter-chip ${i===0?'active':''}" data-filter="${f}">${f}</button>`).join('')}</div>
+      <div class="events-grid" id="events-grid">
+        ${cards || `<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-title">Nenhum evento disponível</div></div>`}
       </div>
-      <div class="stat-card">
-        <div class="stat-icon stat-icon-military">✓</div>
-        <div><div class="stat-value">${confirmedEvents}</div><div class="stat-label">Eventos Disponíveis</div></div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon stat-icon-black"></div>
-        <div><div class="stat-value">${totalAthletes}</div><div class="stat-label">Atletas na Plataforma</div></div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon stat-icon-orange"></div>
-        <div><div class="stat-value">${pendingEvents}</div><div class="stat-label">Em Andamento</div></div>
-      </div>
-    </div>
-
-    <div class="section-header">
-      <div class="section-title">Eventos Disponíveis</div>
-      <a href="#/eventos" style="font-size:13px;color:var(--orange);text-decoration:none;font-weight:600">Ver todos</a>
-    </div>
-    <div class="events-grid">
-      ${cards || `<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-title">Nenhum evento disponível</div></div>`}
     </div>`;
 }
 
@@ -512,7 +483,7 @@ function buildEventCard(e) {
   const st = statusMap[status] || { cls: 'badge-pending', text: status };
 
   return `
-    <div class="event-card" data-modality="${e.modality}" onclick="navigate('#/eventos/${e.id}')">
+    <div class="event-card" data-modality="${e.modality}" data-city="${e.arena_city||''}" data-fee="${e.registration_fee||0}" data-date="${(e.event_date||'').toString().slice(0,10)}" onclick="navigate('#/eventos/${e.id}')">
       <div class="event-card-header">
         ${e.banner ? `<img src="${e.banner}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1">` : ''}
         <div class="event-card-header-content">
@@ -644,10 +615,10 @@ function buildEventDetailHTML(ev, user, isOwner, myReg) {
       ${orgActions}
 
       <div class="stats-row">
-        <div class="stat-card"><div class="stat-icon stat-icon-orange"></div><div><div class="stat-value">${formatCurrency(ev.registration_fee)}</div><div class="stat-label">Inscrição</div></div></div>
-        <div class="stat-card"><div class="stat-icon stat-icon-black"></div><div><div class="stat-value">${ev.participant_limit}</div><div class="stat-label">Vagas (pagos)</div></div></div>
-        <div class="stat-card"><div class="stat-icon stat-icon-military"></div><div><div class="stat-value">${paid.length}</div><div class="stat-label">Confirmados</div></div></div>
-        <div class="stat-card"><div class="stat-icon stat-icon-orange"></div><div><div class="stat-value">${pending.length}</div><div class="stat-label">Aguardando</div></div></div>
+        <div class="stat-card"><div class="stat-icon stat-icon-orange"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 9h16M9 1v16"/></svg></div><div class="stat-card-text"><div class="stat-value">${formatCurrency(ev.registration_fee)}</div><div class="stat-label">Inscrição</div></div></div>
+        <div class="stat-card"><div class="stat-icon stat-icon-black"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v2"/><circle cx="9" cy="7" r="4"/></svg></div><div class="stat-card-text"><div class="stat-value">${ev.participant_limit}</div><div class="stat-label">Vagas (pagos)</div></div></div>
+        <div class="stat-card"><div class="stat-icon stat-icon-military"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 6L7 15l-4-4"/></svg></div><div class="stat-card-text"><div class="stat-value">${paid.length}</div><div class="stat-label">Confirmados</div></div></div>
+        <div class="stat-card"><div class="stat-icon stat-icon-orange"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="9" r="7"/><path d="M9 5v4l3 3"/></svg></div><div class="stat-card-text"><div class="stat-value">${pending.length}</div><div class="stat-label">Aguardando</div></div></div>
       </div>
 
       <!-- Arena Status -->
@@ -1000,57 +971,31 @@ async function renderMyRegistrations(el) {
 async function renderDashboard(el) {
   el.innerHTML = `<div class="stats-grid">${Array(4).fill('<div class="skeleton skel-card" style="height:80px"></div>').join('')}</div>`;
   try {
-    const [events, notifs] = await Promise.all([
-      apiFetch('/events'),
-      apiFetch('/notifications').catch(() => ({ notifications: [], unread_count: 0 }))
-    ]);
+    const events = await apiFetch('/events');
     if (!events) return;
     const user = getUser();
     const myEvents = events.filter(e => e.organizer_id === user?.id);
-    const totalInscritos = myEvents.reduce((a, e) => a + (parseInt(e.total_registered)||0), 0);
-    const confirmedCount = myEvents.filter(e => e.status === 'confirmado').length;
-    const pendingCount = myEvents.filter(e => e.status === 'pendente').length;
-
-    const cards = myEvents.slice(0, 4).map(e => buildEventCard(e)).join('');
+    const cards = myEvents.map(e => buildEventCard(e)).join('');
 
     el.innerHTML = `
-      <div style="margin-bottom:24px">
-        <h2 style="font-family:var(--font-display);font-size:28px;font-weight:900;text-transform:uppercase">
-          Olá, ${user?.name?.split(' ')[0]}!
-        </h2>
-        <p style="color:var(--gray-500);margin-top:4px">Aqui está seu resumo de hoje.</p>
-      </div>
-
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon stat-icon-orange"></div>
-          <div><div class="stat-value">${myEvents.length}</div><div class="stat-label">Meus Eventos</div></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon stat-icon-military">✓</div>
-          <div><div class="stat-value">${confirmedCount}</div><div class="stat-label">Confirmados</div></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon stat-icon-black"></div>
-          <div><div class="stat-value">${totalInscritos}</div><div class="stat-label">Inscrições</div></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon stat-icon-orange"></div>
-          <div><div class="stat-value">${pendingCount}</div><div class="stat-label">Pendentes Arena</div></div>
+      <div class="page-header">
+        <div class="container">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div><h1>Meus Eventos</h1><p>${myEvents.length} evento(s)</p></div>
+            <a href="#/criar-evento" class="btn btn-primary btn-sm">+ Novo evento</a>
+          </div>
         </div>
       </div>
-
-      <div class="section-header">
-        <div class="section-title">Eventos Recentes</div>
-        <a href="#/criar-evento" class="btn btn-primary btn-sm">+ Novo</a>
-      </div>
-      ${myEvents.length === 0
-        ? `<div class="card" style="padding:24px"><div class="empty-state">
+      <div class="container">
+        <div class="filter-bar">${['Todos','Vôlei','Futevôlei','Beach Tennis'].map((f,i) => `<button class="filter-chip ${i===0?'active':''}" data-filter="${f}">${f}</button>`).join('')}</div>
+        <div class="events-grid" id="events-grid">
+          ${cards || `<div class="empty-state" style="grid-column:1/-1">
             <div class="empty-state-title">Nenhum evento criado</div>
             <p style="color:var(--gray-300);font-size:14px">Crie seu primeiro evento para começar.</p>
-          </div></div>`
-        : `<div class="events-grid">${cards}</div>`
-      }`;
+          </div>`}
+        </div>
+      </div>`;
+    bindFilters();
   } catch (err) {
     el.innerHTML = `<div class="empty-state"><p>${err.message}</p></div>`;
   }
@@ -1062,6 +1007,38 @@ async function renderProfile(el) {
   try {
     const user = await apiFetch('/users/me');
     if (!user) return;
+
+    // Load stats for the profile summary
+    let statsHTML = '';
+    if (user.role === 'organizador') {
+      const [eventsAll, orgEvents] = await Promise.all([
+        apiFetch('/events').catch(() => []),
+        apiFetch('/events/organizer/mine').catch(() => null)
+      ]);
+      const myEvents = orgEvents || (eventsAll || []).filter(e => e.organizer_id === user.id);
+      const totalInscritos = myEvents.reduce((a, e) => a + (parseInt(e.total_registered) || 0), 0);
+      const confirmedCount = myEvents.filter(e => e.status === 'confirmado').length;
+      const pendingCount = myEvents.filter(e => e.status === 'pendente').length;
+      statsHTML = `
+        <div class="stats-grid" style="margin-top:20px">
+          <div class="stat-card"><div class="stat-icon stat-icon-orange"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="14" height="14" rx="2"/><path d="M16 2v4M4 2v4M2 8h16"/></svg></div><div><div class="stat-value">${myEvents.length}</div><div class="stat-label">Meus Eventos</div></div></div>
+          <div class="stat-card"><div class="stat-icon stat-icon-military"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg></div><div><div class="stat-value">${confirmedCount}</div><div class="stat-label">Confirmados</div></div></div>
+          <div class="stat-card"><div class="stat-icon stat-icon-black"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H7a4 4 0 00-4-4v2"/><circle cx="10" cy="7" r="4"/></svg></div><div><div class="stat-value">${totalInscritos}</div><div class="stat-label">Inscrições</div></div></div>
+          <div class="stat-card"><div class="stat-icon stat-icon-orange"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="8"/><path d="M10 6v4l3 3"/></svg></div><div><div class="stat-value">${pendingCount}</div><div class="stat-label">Pendentes</div></div></div>
+        </div>`;
+    } else {
+      const myRegs = await apiFetch('/registrations/my').catch(() => []);
+      const regs = Array.isArray(myRegs) ? myRegs : [];
+      const paidCount = regs.filter(r => r.payment_status === 'pago').length;
+      const pendingCount = regs.filter(r => r.payment_status === 'pendente').length;
+      statsHTML = `
+        <div class="stats-grid" style="margin-top:20px">
+          <div class="stat-card"><div class="stat-icon stat-icon-orange"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="14" height="14" rx="2"/><path d="M16 2v4M4 2v4M2 8h16"/></svg></div><div><div class="stat-value">${regs.length}</div><div class="stat-label">Inscrições</div></div></div>
+          <div class="stat-card"><div class="stat-icon stat-icon-military"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg></div><div><div class="stat-value">${paidCount}</div><div class="stat-label">Confirmados</div></div></div>
+          <div class="stat-card"><div class="stat-icon stat-icon-orange"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="8"/><path d="M10 6v4l3 3"/></svg></div><div><div class="stat-value">${pendingCount}</div><div class="stat-label">Pendentes</div></div></div>
+        </div>`;
+    }
+
     el.innerHTML = `
       <div class="profile-page">
         <div class="profile-cover"><div class="profile-cover-pattern"></div></div>
@@ -1077,6 +1054,8 @@ async function renderProfile(el) {
             <div class="profile-display-name">${user.name}</div>
             <div class="profile-role-chip ${user.role === 'organizador' ? 'chip-organizer' : 'chip-athlete'}">${user.role === 'organizador' ? 'Organizador' : 'Atleta'}</div>
           </div>
+
+          ${statsHTML}
 
           <div class="profile-section-title">Informações pessoais</div>
           <div class="profile-info-grid">

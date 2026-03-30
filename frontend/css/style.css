@@ -425,39 +425,54 @@ textarea.form-control, textarea.form-input { resize: vertical; min-height: 100px
 /* ── STATS ── */
 .stats-grid, .stats-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
   margin-bottom: 24px;
 }
 .stat-card {
   background: white;
   border-radius: var(--radius-lg);
-  padding: 20px 24px;
+  padding: 16px 18px;
   box-shadow: var(--shadow);
   border: 1px solid var(--gray-100);
-  display: flex; align-items: center; gap: 16px;
+  display: flex; align-items: center; gap: 14px;
+  min-width: 0;
 }
+.stat-card-text { min-width: 0; flex: 1; }
 .stat-icon {
-  width: 48px; height: 48px;
-  border-radius: 12px;
+  width: 42px; height: 42px;
+  border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; font-size: 1.3rem;
+  flex-shrink: 0; font-size: 1.1rem;
 }
+.stat-icon svg { flex-shrink: 0; }
 .stat-icon-orange { background: rgba(240,90,26,0.1); color: var(--orange); }
 .stat-icon-military { background: rgba(74,92,58,0.1); color: var(--military); }
 .stat-icon-black { background: var(--gray-100); color: var(--gray-700); }
 .stat-value {
   font-family: var(--font-display);
-  font-size: 32px; font-weight: 900;
+  font-size: 26px; font-weight: 900;
   line-height: 1; color: var(--black);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .stat-label {
-  font-size: 12px; color: var(--gray-500);
+  font-size: 11px; color: var(--gray-500);
   font-weight: 500; text-transform: uppercase;
   letter-spacing: 0.5px; margin-top: 2px;
+  white-space: nowrap;
 }
 .stat-card.orange .stat-value { color: var(--orange); }
 .stat-card.green .stat-value { color: var(--military); }
+
+/* ── FILTER ADVANCED ── */
+.filter-advanced { margin-bottom: 16px; }
+.filter-row {
+  display: flex; gap: 10px; flex-wrap: wrap;
+}
+.filter-row .form-control-sm {
+  padding: 8px 12px; font-size: 13px;
+  border-radius: var(--radius); flex: 1; min-width: 140px;
+}
 
 /* ── EVENT CARDS ── */
 .events-grid {
