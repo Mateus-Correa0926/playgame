@@ -144,6 +144,7 @@ function updateNav() {
       '#/': user.role === 'organizador' ? 'Meus Eventos' : 'Eventos',
       '#/criar-evento': 'Novo Evento',
       '#/minhas-inscricoes': 'Minhas Inscrições',
+      '#/convites': 'Convites',
       '#/perfil': 'Meu Perfil',
       '#/arenas': 'Arenas',
       '#/dashboard': 'Dashboard',
@@ -192,6 +193,7 @@ function updateSidebar(user) {
     <a class="nav-item ${hash === '#/' || hash === '' ? 'active' : ''}" href="#/">Início</a>
     <div class="nav-section-title">Minha Conta</div>
     <a class="nav-item ${hash === '#/minhas-inscricoes' ? 'active' : ''}" href="#/minhas-inscricoes">Inscrições</a>
+    <a class="nav-item ${hash === '#/convites' ? 'active' : ''}" href="#/convites">Convites</a>
     <a class="nav-item ${hash === '#/perfil' ? 'active' : ''}" href="#/perfil">Perfil</a>
     <a class="nav-item ${hash === '#/configuracoes' ? 'active' : ''}" href="#/configuracoes">Configurações</a>
   `;
@@ -221,6 +223,11 @@ function renderPage(hash) {
   if (hash === '#/eventos') return renderHome(content);
   if (hash === '#/criar-evento') return renderCreateEvent(content);
   if (hash === '#/minhas-inscricoes') return renderMyRegistrations(content);
+  if (hash === '#/convites') return renderMyInvites(content);
+  if (hash.startsWith('#/convite/')) {
+    const token = hash.split('/')[2];
+    return renderInvitePage(content, token);
+  }
   if (hash === '#/perfil') return renderProfile(content);
   if (hash === '#/arenas') return renderArenas(content);
   if (hash === '#/dashboard') return renderDashboard(content);
@@ -746,6 +753,7 @@ window.deleteEvent = async function(eventId) {
 function openRegisterModal(eventId, ev) {
   const modality = ev.modality || '';
   const needsPartner = !modality.includes('1x1');
+  const user = getUser();
 
   const html = `
     <div class="modal-overlay" id="reg-modal">
@@ -755,22 +763,37 @@ function openRegisterModal(eventId, ev) {
           <button class="modal-close" onclick="$('#reg-modal').remove()">✕</button>
         </div>
         <div class="modal-body">
+          <div class="card mb-12" style="background:var(--gray-50)">
+            <div class="card-body" style="padding:14px;display:flex;align-items:center;gap:12px">
+              <div class="profile-avatar-sm" style="width:40px;height:40px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px;overflow:hidden;flex-shrink:0">
+                ${user.avatar ? `<img src="${user.avatar}" style="width:100%;height:100%;object-fit:cover">` : (user.name||'U').charAt(0)}
+              </div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:.9rem">${user.name}</div>
+                <div style="font-size:.78rem;color:var(--text-secondary)">${user.email} ${user.phone ? '| ' + user.phone : ''}</div>
+              </div>
+              <svg width="16" height="16" fill="none" stroke="var(--military)" stroke-width="2.5"><path d="M13.5 4.5L6 12 2.5 8.5"/></svg>
+            </div>
+          </div>
           <div class="form-group">
             <label class="form-label">Nome da equipe (opcional)</label>
             <input type="text" class="form-control" id="r-team" placeholder="Ex: Silva & Pereira">
           </div>
           ${needsPartner ? `
           <div class="form-group">
-            <label class="form-label">Nome do parceiro/a</label>
-            <input type="text" class="form-control" id="r-partner-name" placeholder="Nome completo">
-          </div>
-          <div class="form-group">
-            <label class="form-label">E-mail do parceiro/a</label>
-            <input type="email" class="form-control" id="r-partner-email" placeholder="email@parceiro.com">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Telefone do parceiro/a</label>
-            <input type="tel" class="form-control" id="r-partner-phone" placeholder="(11) 99999-9999">
+            <label class="form-label" style="margin-bottom:8px">Convidar parceiro/a</label>
+            <div style="position:relative">
+              <input type="text" class="form-control" id="r-partner-search" placeholder="Buscar por nome ou e-mail..." autocomplete="off" oninput="searchPartner(this.value)">
+              <div id="partner-results" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--gray-200);border-radius:8px;max-height:180px;overflow-y:auto;z-index:10;box-shadow:0 4px 12px rgba(0,0,0,.1)"></div>
+            </div>
+            <div id="selected-partner" style="display:none;margin-top:8px"></div>
+            <div style="text-align:center;margin:10px 0;font-size:.78rem;color:var(--text-secondary)">ou preencha manualmente</div>
+            <div class="form-group">
+              <input type="text" class="form-control" id="r-partner-name" placeholder="Nome completo do parceiro/a">
+            </div>
+            <div class="form-group">
+              <input type="email" class="form-control" id="r-partner-email" placeholder="E-mail do parceiro/a">
+            </div>
           </div>` : ''}
           <div class="form-group">
             <label class="form-label">Observações</label>
@@ -791,25 +814,89 @@ function openRegisterModal(eventId, ev) {
     </div>`;
   document.body.insertAdjacentHTML('beforeend', html);
 
+  let selectedPartnerId = null;
+
+  window.searchPartner = async function(q) {
+    if (q.length < 2) { $('#partner-results').style.display = 'none'; return; }
+    try {
+      const users = await apiFetch('/users/search?q=' + encodeURIComponent(q));
+      const results = (users || []).filter(u => u.id !== user.id);
+      if (!results.length) {
+        $('#partner-results').innerHTML = '<div style="padding:10px;font-size:.82rem;color:var(--text-secondary)">Nenhum usuário encontrado</div>';
+      } else {
+        $('#partner-results').innerHTML = results.map(u => `
+          <div style="padding:8px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--gray-100)" onmouseover="this.style.background='var(--gray-50)'" onmouseout="this.style.background=''" onclick="selectPartner(${u.id}, '${(u.name||'').replace(/'/g,"\\'")}', '${u.email||''}')">
+            <div style="width:30px;height:30px;border-radius:50%;background:var(--military);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700;overflow:hidden;flex-shrink:0">
+              ${u.avatar ? `<img src="${u.avatar}" style="width:100%;height:100%;object-fit:cover">` : (u.name||'U').charAt(0)}
+            </div>
+            <div><div style="font-size:.85rem;font-weight:600">${u.name}</div><div style="font-size:.75rem;color:var(--text-secondary)">${u.email}</div></div>
+          </div>`).join('');
+      }
+      $('#partner-results').style.display = 'block';
+    } catch (e) { $('#partner-results').style.display = 'none'; }
+  };
+
+  window.selectPartner = function(id, name, email) {
+    selectedPartnerId = id;
+    $('#partner-results').style.display = 'none';
+    $('#r-partner-search').value = '';
+    if ($('#r-partner-name')) $('#r-partner-name').value = name;
+    if ($('#r-partner-email')) $('#r-partner-email').value = email;
+    $('#selected-partner').style.display = 'block';
+    $('#selected-partner').innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--gray-50);border-radius:8px">
+        <div style="width:28px;height:28px;border-radius:50%;background:var(--military);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700">${name.charAt(0)}</div>
+        <div style="flex:1"><span style="font-weight:600;font-size:.85rem">${name}</span><span style="font-size:.78rem;color:var(--text-secondary);margin-left:6px">${email}</span></div>
+        <button onclick="clearPartner()" style="border:none;background:none;cursor:pointer;color:var(--text-secondary);font-size:18px">✕</button>
+      </div>`;
+  };
+
+  window.clearPartner = function() {
+    selectedPartnerId = null;
+    $('#selected-partner').style.display = 'none';
+    if ($('#r-partner-name')) $('#r-partner-name').value = '';
+    if ($('#r-partner-email')) $('#r-partner-email').value = '';
+  };
+
   $('#confirm-reg-btn').addEventListener('click', async () => {
     const btn = $('#confirm-reg-btn');
     btn.disabled = true; btn.textContent = 'Inscrevendo...';
     try {
-      await apiFetch('/registrations', {
+      const regBody = {
+        event_id: eventId,
+        team_name: $('#r-team')?.value,
+        partner_name: $('#r-partner-name')?.value,
+        partner_email: $('#r-partner-email')?.value,
+        notes: $('#r-notes')?.value
+      };
+      const regResult = await apiFetch('/registrations', {
         method: 'POST',
-        body: JSON.stringify({
-          event_id: eventId,
-          team_name: $('#r-team')?.value,
-          partner_name: $('#r-partner-name')?.value,
-          partner_email: $('#r-partner-email')?.value,
-          partner_phone: $('#r-partner-phone')?.value,
-          notes: $('#r-notes')?.value
-        })
+        body: JSON.stringify(regBody)
       });
+
+      if (selectedPartnerId && regResult?.id) {
+        try {
+          await apiFetch('/invites', {
+            method: 'POST',
+            body: JSON.stringify({
+              event_id: eventId,
+              registration_id: regResult.id,
+              invitee_id: selectedPartnerId
+            })
+          });
+        } catch (invErr) { console.warn('Convite não enviado:', invErr.message); }
+      }
+
       $('#reg-modal').remove();
       toast('Inscrição realizada com sucesso!', 'success');
       navigate(`#/eventos/${eventId}`);
     } catch (err) {
+      if (err.message && err.message.includes('perfil')) {
+        $('#reg-modal').remove();
+        toast('Complete seu perfil para se inscrever.', 'error');
+        navigate('#/perfil');
+        return;
+      }
       toast(err.message, 'error');
       btn.disabled = false; btn.textContent = 'Confirmar inscrição';
     }
@@ -963,6 +1050,115 @@ async function renderMyRegistrations(el) {
   }
 }
 
+// ── MY INVITES ──
+async function renderMyInvites(el) {
+  el.innerHTML = `<div class="container"><div class="loading"><div class="spinner"></div></div></div>`;
+  try {
+    const [received, sent] = await Promise.all([
+      apiFetch('/invites/my').catch(() => []),
+      apiFetch('/invites/sent').catch(() => [])
+    ]);
+    const recvList = Array.isArray(received) ? received : [];
+    const sentList = Array.isArray(sent) ? sent : [];
+
+    const recvCards = recvList.map(inv => `
+      <div class="card mb-12">
+        <div class="card-body" style="padding:14px;display:flex;align-items:center;gap:12px">
+          <div style="width:40px;height:40px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px;flex-shrink:0">${(inv.inviter_name||'?').charAt(0)}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:700;font-size:.88rem">${inv.inviter_name||'Jogador'} convidou você</div>
+            <div style="font-size:.78rem;color:var(--text-secondary)">${inv.event_title||'Evento'} - ${inv.modality||''}</div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-primary btn-sm" onclick="respondInvite(${inv.id},'accept')">Aceitar</button>
+            <button class="btn btn-outline btn-sm" onclick="respondInvite(${inv.id},'decline')">Recusar</button>
+          </div>
+        </div>
+      </div>`).join('') || '<div class="empty-state"><p>Nenhum convite recebido</p></div>';
+
+    const sentCards = sentList.map(inv => `
+      <div class="card mb-12">
+        <div class="card-body" style="padding:14px;display:flex;align-items:center;gap:12px">
+          <div style="width:40px;height:40px;border-radius:50%;background:var(--military);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px;flex-shrink:0">${(inv.invitee_name||inv.invitee_email||'?').charAt(0)}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:700;font-size:.88rem">${inv.invitee_name||inv.invitee_email||'Convidado'}</div>
+            <div style="font-size:.78rem;color:var(--text-secondary)">${inv.event_title||'Evento'} - <span style="color:${inv.status==='aceito'?'var(--military)':inv.status==='recusado'?'var(--danger)':'var(--orange)'}">${inv.status}</span></div>
+          </div>
+        </div>
+      </div>`).join('') || '<div class="empty-state"><p>Nenhum convite enviado</p></div>';
+
+    el.innerHTML = `
+      <div class="page-header"><div class="container"><h1>Convites</h1></div></div>
+      <div class="container">
+        <div style="font-weight:700;font-size:1rem;margin-bottom:12px">Recebidos</div>
+        ${recvCards}
+        <div style="font-weight:700;font-size:1rem;margin:20px 0 12px">Enviados</div>
+        ${sentCards}
+      </div>`;
+  } catch (err) {
+    el.innerHTML = `<div class="container"><div class="empty-state"><p>${err.message}</p></div></div>`;
+  }
+}
+
+window.respondInvite = async function(id, action) {
+  try {
+    await apiFetch(`/invites/${id}/${action}`, { method: 'PUT' });
+    toast(action === 'accept' ? 'Convite aceito!' : 'Convite recusado.', action === 'accept' ? 'success' : 'info');
+    renderMyInvites($('#page-content'));
+  } catch (err) { toast(err.message, 'error'); }
+};
+
+// ── INVITE TOKEN PAGE ──
+async function renderInvitePage(el, token) {
+  el.innerHTML = `<div class="container"><div class="loading"><div class="spinner"></div></div></div>`;
+  try {
+    const inv = await apiFetch(`/invites/token/${token}`);
+    if (!inv) { el.innerHTML = `<div class="container"><div class="empty-state"><p>Convite não encontrado.</p></div></div>`; return; }
+    const user = getUser();
+
+    el.innerHTML = `
+      <div class="container" style="max-width:500px;margin:40px auto">
+        <div class="card">
+          <div class="card-body" style="padding:28px;text-align:center">
+            <svg width="48" height="48" fill="none" stroke="var(--orange)" stroke-width="1.5" style="margin-bottom:16px"><rect x="6" y="6" width="36" height="36" rx="8"/><path d="M16 24l6 6 12-12"/></svg>
+            <h2 style="margin-bottom:6px">Convite para torneio</h2>
+            <p style="color:var(--text-secondary);margin-bottom:16px">${inv.inviter_name||'Um jogador'} convidou você para participar como dupla.</p>
+            <div class="card mb-12" style="background:var(--gray-50);text-align:left">
+              <div class="card-body" style="padding:14px">
+                <div style="font-weight:700;margin-bottom:4px">${inv.event_title||'Evento'}</div>
+                <div style="font-size:.82rem;color:var(--text-secondary)">${inv.modality||''}</div>
+              </div>
+            </div>
+            ${inv.status !== 'pendente' ? `<div style="font-weight:600;color:var(--text-secondary)">Este convite já foi ${inv.status}.</div>` :
+            !user ? `<div style="margin-top:12px"><p style="font-size:.85rem;color:var(--text-secondary)">Faça login ou crie sua conta para aceitar o convite.</p><a href="#/login" class="btn btn-primary btn-block" style="margin-top:10px">Entrar / Cadastrar</a></div>` :
+            `<div style="display:flex;gap:10px;justify-content:center;margin-top:12px">
+              <button class="btn btn-primary" onclick="acceptInviteToken('${token}')">Aceitar convite</button>
+              <button class="btn btn-outline" onclick="declineInviteToken('${token}')">Recusar</button>
+            </div>`}
+          </div>
+        </div>
+      </div>`;
+  } catch (err) {
+    el.innerHTML = `<div class="container"><div class="empty-state"><p>Convite não encontrado ou expirado.</p></div></div>`;
+  }
+}
+
+window.acceptInviteToken = async function(token) {
+  try {
+    await apiFetch(`/invites/token/${token}/accept`, { method: 'PUT' });
+    toast('Convite aceito! Você foi adicionado como dupla.', 'success');
+    navigate('#/minhas-inscricoes');
+  } catch (err) { toast(err.message, 'error'); }
+};
+
+window.declineInviteToken = async function(token) {
+  try {
+    await apiFetch(`/invites/token/${token}/decline`, { method: 'PUT' });
+    toast('Convite recusado.', 'info');
+    navigate('#/');
+  } catch (err) { toast(err.message, 'error'); }
+};
+
 // ── DASHBOARD (organizador) ──
 async function renderDashboard(el) {
   el.innerHTML = `<div class="stats-grid">${Array(4).fill('<div class="skeleton skel-card" style="height:80px"></div>').join('')}</div>`;
@@ -1035,9 +1231,15 @@ async function renderProfile(el) {
         </div>`;
     }
 
+    const profileComplete = !!(user.name && user.phone && user.cpf && user.birth_date && user.gender && user.city && user.state);
+
     el.innerHTML = `
       <div class="profile-page">
-        <div class="profile-cover"><div class="profile-cover-pattern"></div></div>
+        <div class="profile-cover" onclick="$('#banner-input').click()" style="cursor:pointer">
+          ${user.banner ? `<img src="${user.banner}" class="profile-cover-img">` : '<div class="profile-cover-pattern"></div>'}
+          <div class="profile-cover-edit">Alterar capa</div>
+          <input type="file" id="banner-input" accept="image/*" style="display:none" onchange="uploadBanner(this)">
+        </div>
         <div class="profile-body">
           <div class="profile-avatar-section">
             <div class="profile-avatar-xl" onclick="$('#avatar-input').click()">
@@ -1053,15 +1255,61 @@ async function renderProfile(el) {
 
           ${statsHTML}
 
+          ${profileComplete ? '' : `
+          <div class="card mb-12" style="border-left:3px solid var(--orange);background:var(--orange-xlight,#fff5f0)">
+            <div class="card-body" style="padding:12px;display:flex;align-items:center;gap:10px">
+              <svg width="20" height="20" fill="none" stroke="var(--orange)" stroke-width="2"><circle cx="10" cy="10" r="9"/><path d="M10 6v4M10 13h.01"/></svg>
+              <div style="flex:1">
+                <div style="font-weight:700;font-size:.85rem;color:var(--orange)">Perfil incompleto</div>
+                <div style="font-size:.78rem;color:var(--text-secondary)">Preencha todos os dados para se inscrever com 1 clique.</div>
+              </div>
+            </div>
+          </div>`}
+
           <div class="profile-section-title">Informações pessoais</div>
           <div class="profile-info-grid">
             <div class="profile-field">
-              <label class="form-label">Nome</label>
+              <label class="form-label">Nome *</label>
               <input type="text" class="form-control" id="p-name" value="${user.name||''}">
             </div>
             <div class="profile-field">
-              <label class="form-label">Telefone</label>
-              <input type="tel" class="form-control" id="p-phone" value="${user.phone||''}">
+              <label class="form-label">Telefone *</label>
+              <input type="tel" class="form-control" id="p-phone" value="${user.phone||''}" placeholder="(11) 99999-9999">
+            </div>
+            <div class="profile-field">
+              <label class="form-label">CPF *</label>
+              <input type="text" class="form-control" id="p-cpf" value="${user.cpf||''}" placeholder="000.000.000-00" maxlength="14" oninput="maskCPF(this)">
+            </div>
+            <div class="profile-field">
+              <label class="form-label">Data de nascimento *</label>
+              <input type="date" class="form-control" id="p-birth" value="${user.birth_date ? user.birth_date.slice(0,10) : ''}">
+            </div>
+            <div class="profile-field">
+              <label class="form-label">Gênero *</label>
+              <select class="form-control" id="p-gender">
+                <option value="">Selecione...</option>
+                <option value="masculino" ${user.gender==='masculino'?'selected':''}>Masculino</option>
+                <option value="feminino" ${user.gender==='feminino'?'selected':''}>Feminino</option>
+                <option value="outro" ${user.gender==='outro'?'selected':''}>Outro</option>
+              </select>
+            </div>
+            <div class="profile-field">
+              <label class="form-label">Tamanho da camisa</label>
+              <select class="form-control" id="p-shirt">
+                <option value="">Selecione...</option>
+                ${['PP','P','M','G','GG','XGG'].map(s => `<option value="${s}" ${user.shirt_size===s?'selected':''}>${s}</option>`).join('')}
+              </select>
+            </div>
+            <div class="profile-field">
+              <label class="form-label">Cidade *</label>
+              <input type="text" class="form-control" id="p-city" value="${user.city||''}" placeholder="Ex: São Paulo">
+            </div>
+            <div class="profile-field">
+              <label class="form-label">Estado *</label>
+              <select class="form-control" id="p-state">
+                <option value="">UF...</option>
+                ${['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'].map(s => `<option value="${s}" ${user.state===s?'selected':''}>${s}</option>`).join('')}
+              </select>
             </div>
             <div class="profile-field" style="grid-column:1/-1">
               <label class="form-label">E-mail</label>
@@ -1073,7 +1321,7 @@ async function renderProfile(el) {
             </div>
           </div>
           <div class="profile-save-bar">
-            <span style="font-size:.85rem;color:var(--gray-500)">Salve suas alterações</span>
+            <span style="font-size:.85rem;color:var(--gray-500)">Campos com * são obrigatórios para inscrição</span>
             <button class="btn btn-primary" onclick="saveProfile()">Salvar</button>
           </div>
 
@@ -1102,15 +1350,27 @@ async function renderProfile(el) {
 
 window.saveProfile = async function() {
   try {
-    await apiFetch('/users/me', {
-      method: 'PUT',
-      body: JSON.stringify({ name: $('#p-name').value, phone: $('#p-phone').value, bio: $('#p-bio').value })
-    });
-    // Update stored user
+    const body = {
+      name: $('#p-name').value,
+      phone: $('#p-phone').value,
+      bio: $('#p-bio').value,
+      cpf: $('#p-cpf').value.replace(/\D/g, ''),
+      birth_date: $('#p-birth').value || null,
+      gender: $('#p-gender').value || null,
+      city: $('#p-city').value,
+      state: $('#p-state').value,
+      shirt_size: $('#p-shirt').value || null
+    };
+    await apiFetch('/users/me', { method: 'PUT', body: JSON.stringify(body) });
     const u = getUser();
-    if (u) { u.name = $('#p-name').value; setAuth(getToken(), u); }
+    if (u) {
+      Object.assign(u, body);
+      u.name = $('#p-name').value;
+      setAuth(getToken(), u);
+    }
     toast('Perfil atualizado!', 'success');
     updateNav();
+    renderProfile($('#page-content'));
   } catch (err) { toast(err.message, 'error'); }
 };
 
@@ -1141,6 +1401,32 @@ window.uploadAvatar = async function(input) {
     renderProfile($('#page-content'));
     updateNav();
   } else { toast(data.error, 'error'); }
+};
+
+window.uploadBanner = async function(input) {
+  if (!input.files[0]) return;
+  const form = new FormData();
+  form.append('banner', input.files[0]);
+  const res = await fetch(API + '/users/me/banner', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${getToken()}` },
+    body: form
+  });
+  const data = await res.json();
+  if (res.ok) {
+    toast('Capa atualizada!', 'success');
+    const u = getUser(); if (u) { u.banner = data.banner; setAuth(getToken(), u); }
+    renderProfile($('#page-content'));
+  } else { toast(data.error, 'error'); }
+};
+
+window.maskCPF = function(el) {
+  let v = el.value.replace(/\D/g, '');
+  if (v.length > 11) v = v.slice(0, 11);
+  if (v.length > 9) v = v.slice(0,3) + '.' + v.slice(3,6) + '.' + v.slice(6,9) + '-' + v.slice(9);
+  else if (v.length > 6) v = v.slice(0,3) + '.' + v.slice(3,6) + '.' + v.slice(6);
+  else if (v.length > 3) v = v.slice(0,3) + '.' + v.slice(3);
+  el.value = v;
 };
 
 // ── ARENAS ──

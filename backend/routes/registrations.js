@@ -4,12 +4,28 @@ const { pool } = require('../config/database');
 const { authMiddleware, requireRole } = require('../middleware/auth');
 const router = express.Router();
 
-// POST /api/registrations — atleta se inscreve
+// POST /api/registrations — atleta se inscreve (auto-fill from profile)
 router.post('/', authMiddleware, requireRole('atleta'), async (req, res) => {
   const { event_id, partner_name, partner_email, partner_phone, team_name, notes } = req.body;
   if (!event_id) return res.status(400).json({ error: 'ID do evento obrigatório.' });
 
   try {
+    // Check profile completeness
+    const { rows: profile } = await pool.query(
+      'SELECT name, phone, cpf, birth_date, gender, city, state FROM users WHERE id=$1',
+      [req.user.id]
+    );
+    const u = profile[0];
+    const requiredFields = ['name', 'phone', 'cpf', 'birth_date', 'gender', 'city', 'state'];
+    const missing = requiredFields.filter(f => !u[f]);
+    if (missing.length > 0) {
+      return res.status(422).json({
+        error: 'Complete seu perfil antes de se inscrever.',
+        missing,
+        code: 'INCOMPLETE_PROFILE'
+      });
+    }
+
     // Verificar se já está inscrito
     const { rows: existing } = await pool.query(
       'SELECT id FROM registrations WHERE event_id=$1 AND athlete_id=$2',
