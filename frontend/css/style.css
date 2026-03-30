@@ -322,7 +322,7 @@ textarea.form-control, textarea.form-input { resize: vertical; min-height: 100px
   display: flex; align-items: center; gap: 10px;
   padding: 10px 12px;
   border-radius: var(--radius);
-  margin-bottom: 4px;
+  margin-bottom: 4vh;
 }
 .sidebar-user-info { flex: 1; min-width: 0; }
 .sidebar-user-name {
