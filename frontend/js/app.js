@@ -142,7 +142,6 @@ function updateNav() {
   if (titleEl) {
     const titleMap = {
       '#/': user.role === 'organizador' ? 'Meus Eventos' : 'Eventos',
-      '#/eventos': 'Eventos',
       '#/criar-evento': 'Novo Evento',
       '#/minhas-inscricoes': 'Minhas Inscrições',
       '#/perfil': 'Meu Perfil',
@@ -180,9 +179,8 @@ function updateSidebar(user) {
   const isOrg = user.role === 'organizador';
   const navItems = isOrg ? `
     <div class="nav-section-title">Principal</div>
-    <a class="nav-item ${hash === '#/' || hash === '#/dashboard' ? 'active' : ''}" href="#/">Dashboard</a>
+    <a class="nav-item ${hash === '#/' || hash === '#/dashboard' ? 'active' : ''}" href="#/">Início</a>
     <a class="nav-item ${hash === '#/criar-evento' ? 'active' : ''}" href="#/criar-evento">Novo Evento</a>
-    <a class="nav-item ${hash === '#/eventos' ? 'active' : ''}" href="#/eventos">Eventos</a>
     <div class="nav-section-title">Gerenciar</div>
     <a class="nav-item ${hash === '#/arenas' ? 'active' : ''}" href="#/arenas">Arenas</a>
     <a class="nav-item ${hash === '#/atletas' ? 'active' : ''}" href="#/atletas">Atletas</a>
@@ -192,8 +190,6 @@ function updateSidebar(user) {
   ` : `
     <div class="nav-section-title">Principal</div>
     <a class="nav-item ${hash === '#/' || hash === '' ? 'active' : ''}" href="#/">Início</a>
-    <a class="nav-item ${hash === '#/eventos' ? 'active' : ''}" href="#/eventos">Eventos</a>
-    <a class="nav-item ${hash === '#/busca' ? 'active' : ''}" href="#/busca">Buscar</a>
     <div class="nav-section-title">Minha Conta</div>
     <a class="nav-item ${hash === '#/minhas-inscricoes' ? 'active' : ''}" href="#/minhas-inscricoes">Inscrições</a>
     <a class="nav-item ${hash === '#/perfil' ? 'active' : ''}" href="#/perfil">Perfil</a>
@@ -222,7 +218,7 @@ function renderPage(hash) {
     const id = hash.split('/')[2];
     return renderEventDetail(content, id);
   }
-  if (hash === '#/eventos') return renderEventList(content);
+  if (hash === '#/eventos') return renderHome(content);
   if (hash === '#/criar-evento') return renderCreateEvent(content);
   if (hash === '#/minhas-inscricoes') return renderMyRegistrations(content);
   if (hash === '#/perfil') return renderProfile(content);

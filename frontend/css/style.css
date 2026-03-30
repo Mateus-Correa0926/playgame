@@ -362,7 +362,10 @@ textarea.form-control, textarea.form-input { resize: vertical; min-height: 100px
 .topbar {
   background: white;
   border-bottom: 1px solid var(--gray-100);
-  padding: 16px 32px;
+  padding-top: 2vh;
+  padding-right: 32px;
+  padding-bottom: 16px;
+  padding-left: 32px;
   display: flex; align-items: center; justify-content: space-between;
   position: sticky; top: 0; z-index: 40;
 }
@@ -465,6 +468,9 @@ textarea.form-control, textarea.form-input { resize: vertical; min-height: 100px
 .stat-card.green .stat-value { color: var(--military); }
 
 /* ── FILTER ADVANCED ── */
+.filter-section {
+  padding: 0 20px;
+}
 .filter-advanced { margin-bottom: 16px; }
 .filter-row {
   display: flex; gap: 10px; flex-wrap: wrap;
@@ -472,6 +478,13 @@ textarea.form-control, textarea.form-input { resize: vertical; min-height: 100px
 .filter-row .form-control-sm {
   padding: 8px 12px; font-size: 13px;
   border-radius: var(--radius); flex: 1; min-width: 140px;
+}
+.date-filter-group {
+  display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 130px;
+}
+.date-filter-label {
+  font-size: 11px; font-weight: 600; color: var(--gray-500);
+  text-transform: uppercase; letter-spacing: 0.5px;
 }
 
 /* ── EVENT CARDS ── */
@@ -994,6 +1007,45 @@ tr:hover td { background: var(--gray-50); }
   font-size: 22px; font-weight: 800;
   text-transform: uppercase; letter-spacing: 0.5px;
 }
+/* ── HERO BANNER ──
+   Desktop: 1100 x 280px (container max-width)
+   Mobile:  100% x 180px
+*/
+.hero-banner {
+  position: relative;
+  width: 100%;
+  height: 280px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+.hero-banner img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+.hero-banner-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(14,14,16,0) 30%, rgba(14,14,16,0.7) 100%);
+  display: flex; flex-direction: column;
+  justify-content: flex-end;
+  padding: 24px 28px;
+}
+.hero-banner-title {
+  font-family: var(--font-display);
+  font-size: 28px; font-weight: 900;
+  color: white; text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.hero-banner-sub {
+  font-size: 14px; color: rgba(255,255,255,0.8);
+  margin-top: 4px;
+}
+@media (max-width: 768px) {
+  .hero-banner { height: 180px; border-radius: var(--radius); }
+  .hero-banner-overlay { padding: 16px 18px; }
+  .hero-banner-title { font-size: 20px; }
+}
+
 .page-header {
   background: var(--white);
   padding: 20px 16px 16px;
