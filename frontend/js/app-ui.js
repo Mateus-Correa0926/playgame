@@ -53,7 +53,6 @@ window.renderHome = async function(el) {
             </div>
           </div>
           <div class="cal-popup" id="cal-popup" style="display:none">
-            <div id="pg-calendar-wrap"></div>
             <div class="cal-popup-footer">
               <div class="cal-input-row">
                 <div class="cal-input-group">
@@ -73,6 +72,7 @@ window.renderHome = async function(el) {
               </div>
               <button class="btn btn-primary btn-sm cal-filter-btn" onclick="calApplyAndClose()">Filtrar</button>
             </div>
+            <div id="pg-calendar-wrap"></div>
           </div>
         </div>
       </div>
