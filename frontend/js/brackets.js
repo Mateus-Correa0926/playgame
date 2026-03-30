@@ -96,7 +96,7 @@ function buildMatchCard(m, isOwner) {
             ${m.team1_reg_id ? (isWin1 ? 'W' : '1') : '—'}
           </div>
           <div style="flex:1;font-weight:${isWin1?700:500};font-size:.9rem;color:${isWin1?'var(--green)':done&&!isWin1?'var(--text-muted)':'var(--text-primary)'}">${t1name}</div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:800;color:${isWin1?'var(--green)':'var(--text-primary)';}">${m.team1_score ?? (done ? '—' : '')}</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:800;color:${isWin1?'var(--green)':'var(--text-primary)'}">${m.team1_score ?? (done ? '—' : '')}</div>
         </div>
         <!-- Time 2 -->
         <div style="display:flex;align-items:center;gap:10px;padding:8px 0">
@@ -104,7 +104,7 @@ function buildMatchCard(m, isOwner) {
             ${m.team2_reg_id ? (isWin2 ? 'W' : '2') : '—'}
           </div>
           <div style="flex:1;font-weight:${isWin2?700:500};font-size:.9rem;color:${isWin2?'var(--green)':done&&!isWin2?'var(--text-muted)':'var(--text-primary)'}">${t2name}</div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:800;color:${isWin2?'var(--green)':'var(--text-primary)';}">${m.team2_score ?? (done ? '—' : '')}</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:800;color:${isWin2?'var(--green)':'var(--text-primary)'}">${m.team2_score ?? (done ? '—' : '')}</div>
         </div>
         ${isOwner && m.status !== 'finalizado' && m.team1_reg_id && m.team2_reg_id ? `
           <div style="margin-top:10px;border-top:1px solid var(--gray-border);padding-top:10px">

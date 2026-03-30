@@ -46,7 +46,7 @@ window.renderHome = async function(el) {
             </select>
           </div>
           </div>
-          <div class="filter-row" style="margin-top:10px">
+          <div class="filter-row" style="margin: 3vh 0;">
             <div class="date-picker-trigger" id="date-picker-trigger" onclick="toggleCalendarPopup()">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
               <span id="date-picker-label">Quando?</span>
@@ -145,10 +145,17 @@ window.initCalendarWidget = function() {
   const now = new Date();
   window._calState = { year: now.getFullYear(), month: now.getMonth(), start: null, end: null, range: false };
   renderCalendar();
+
+  // Stop clicks inside the popup from bubbling to the document listener.
+  // This prevents the popup from closing when inner elements are re-rendered
+  // (detached from DOM) before the event reaches the document handler.
+  const popupEl = document.getElementById('cal-popup');
+  if (popupEl) popupEl.addEventListener('click', function(e) { e.stopPropagation(); });
+
   document.addEventListener('click', function(e) {
     const popup = document.getElementById('cal-popup');
     const trigger = document.getElementById('date-picker-trigger');
-    if (popup && popup.style.display !== 'none' && !popup.contains(e.target) && !trigger.contains(e.target)) {
+    if (popup && popup.style.display !== 'none' && !trigger.contains(e.target)) {
       popup.style.display = 'none';
     }
   });
