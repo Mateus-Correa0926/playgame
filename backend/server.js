@@ -36,7 +36,8 @@ app.use(helmet({
       objectSrc: ["'none'"],
       frameAncestors: ["'none'"],
       baseUri: ["'self'"],
-      formAction: ["'self'"]
+      formAction: ["'self'"],
+      upgradeInsecureRequests: null   // site served over HTTP; don't force HTTPS
     }
   },
   crossOriginEmbedderPolicy: false, // needed for external images
