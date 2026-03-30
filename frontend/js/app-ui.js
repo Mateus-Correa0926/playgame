@@ -11,61 +11,53 @@ window.renderHome = async function(el) {
   const user = getUser();
   if (user?.role === 'organizador') return renderDashboard(el);
 
-  el.innerHTML = `<div class="stats-grid">${buildSkeletonCards(4)}</div>`;
+  el.innerHTML = `<div class="container"><div class="loading"><div class="spinner"></div></div></div>`;
 
   try {
-    const [events, myRegs] = await Promise.all([
-      apiFetch('/events'),
-      apiFetch('/registrations/my').catch(() => [])
-    ]);
+    const events = await apiFetch('/events');
     if (!events) return;
 
-    const confirmedEvents = events.filter(e => e.status === 'confirmado').length;
-    const pendingEvents = events.filter(e => e.status === 'pendente').length;
-    const totalAthletes = events.reduce((a, e) => a + (parseInt(e.total_registered) || 0), 0);
-    const myRegistrations = Array.isArray(myRegs) ? myRegs.length : 0;
-
-    const cards = events.slice(0, 8).map(e => buildEventCard(e)).join('');
+    const cards = events.map(e => buildEventCard(e)).join('');
 
     el.innerHTML = `
-      <div style="margin-bottom:24px">
-        <h2 style="font-family:var(--font-display);font-size:28px;font-weight:900;text-transform:uppercase">
-          Olá, ${user ? user.name.split(' ')[0] : 'Visitante'}!
-        </h2>
-        <p style="color:var(--gray-500);margin-top:4px">Aqui está seu resumo de hoje.</p>
-      </div>
+      <div class="page-header"><div class="container"><h1>Eventos</h1><p>Encontre torneios para participar</p></div></div>
+      <div class="container">
+        <div class="filter-bar">
+          ${['Todos','Vôlei','Futevôlei','Beach Tennis'].map((f,i) => `<button class="filter-chip ${i===0?'active':''}" data-filter="${f}">${f}</button>`).join('')}
+        </div>
+        <div class="filter-advanced" id="filter-advanced">
+          <div class="filter-row">
+            <select class="form-control form-control-sm" id="filter-city" onchange="applyAdvancedFilters()">
+              <option value="">Todos os locais</option>
+            </select>
+            <select class="form-control form-control-sm" id="filter-price" onchange="applyAdvancedFilters()">
+              <option value="">Qualquer valor</option>
+              <option value="0-50">Até R$ 50</option>
+              <option value="50-100">R$ 50 — R$ 100</option>
+              <option value="100-200">R$ 100 — R$ 200</option>
+              <option value="200+">Acima de R$ 200</option>
+            </select>
+            <select class="form-control form-control-sm" id="filter-date" onchange="applyAdvancedFilters()">
+              <option value="">Qualquer data</option>
+              <option value="7">Próximos 7 dias</option>
+              <option value="30">Próximos 30 dias</option>
+              <option value="90">Próximos 3 meses</option>
+            </select>
+          </div>
+        </div>
+        <div class="events-grid" id="events-grid">
+          ${cards || '<div class="empty-state" style="grid-column:1/-1"><p>Nenhum evento disponível</p></div>'}
+        </div>
+      </div>`;
 
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon stat-icon-orange"></div>
-          <div><div class="stat-value">${myRegistrations}</div><div class="stat-label">Minhas Inscrições</div></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon stat-icon-military">✓</div>
-          <div><div class="stat-value">${confirmedEvents}</div><div class="stat-label">Eventos Disponíveis</div></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon stat-icon-black"></div>
-          <div><div class="stat-value">${totalAthletes}</div><div class="stat-label">Atletas na Plataforma</div></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon stat-icon-orange"></div>
-          <div><div class="stat-value">${pendingEvents}</div><div class="stat-label">Em Andamento</div></div>
-        </div>
-      </div>
+    // Populate city filter
+    const cities = [...new Set(events.map(e => e.arena_city).filter(Boolean))].sort();
+    const citySelect = document.getElementById('filter-city');
+    if (citySelect) cities.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; citySelect.appendChild(o); });
 
-      <div class="section-header">
-        <div class="section-title">Eventos Disponíveis</div>
-        <a href="#/eventos" style="font-size:13px;color:var(--orange);text-decoration:none;font-weight:600">Ver todos</a>
-      </div>
-      ${events.length === 0
-        ? `<div class="card" style="padding:24px"><div class="empty-state">
-            <div class="empty-state-title">Nenhuma inscrição</div>
-            <p style="color:var(--gray-300);font-size:14px">Explore os eventos disponíveis e se inscreva!</p>
-          </div></div>`
-        : `<div class="events-grid">${cards}</div>`
-      }`;
-
+    // Store events data for advanced filtering
+    window._homeEvents = events;
+    bindFilters();
   } catch (err) {
     el.innerHTML = `<div class="empty-state"><p>${err.message}</p></div>`;
   }
@@ -74,64 +66,84 @@ window.renderHome = async function(el) {
 // ── ENHANCED DASHBOARD (ORGANIZADOR) ──
 window.renderDashboard = async function(el) {
   const user = getUser();
-  el.innerHTML = `<div class="stats-grid">${buildSkeletonCards(4)}</div>`;
+  el.innerHTML = `<div class="container"><div class="loading"><div class="spinner"></div></div></div>`;
 
   try {
-    const [eventsAll, orgEvents, notifData] = await Promise.all([
+    const [eventsAll, orgEvents] = await Promise.all([
       apiFetch('/events'),
-      apiFetch('/events/organizer/mine').catch(() => null),
-      apiFetch('/notifications').catch(() => ({ notifications: [], unread_count: 0 }))
+      apiFetch('/events/organizer/mine').catch(() => null)
     ]);
 
     const myEvents = orgEvents || (eventsAll || []).filter(e => e.organizer_id === user?.id);
-    const totalInscritos = myEvents.reduce((a, e) => a + (parseInt(e.total_registered) || 0), 0);
-    const confirmedCount = myEvents.filter(e => e.status === 'confirmado').length;
-    const pendingCount = myEvents.filter(e => e.status === 'pendente').length;
-
-    const cards = myEvents.slice(0, 4).map(e => buildEventCard(e)).join('');
+    const cards = myEvents.map(e => buildEventCard(e)).join('');
 
     el.innerHTML = `
-      <div style="margin-bottom:24px">
-        <h2 style="font-family:var(--font-display);font-size:28px;font-weight:900;text-transform:uppercase">
-          Olá, ${user?.name?.split(' ')[0]}!
-        </h2>
-        <p style="color:var(--gray-500);margin-top:4px">Aqui está seu resumo de hoje.</p>
-      </div>
-
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon stat-icon-orange"></div>
-          <div><div class="stat-value">${myEvents.length}</div><div class="stat-label">Meus Eventos</div></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon stat-icon-military">✓</div>
-          <div><div class="stat-value">${confirmedCount}</div><div class="stat-label">Confirmados</div></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon stat-icon-black"></div>
-          <div><div class="stat-value">${totalInscritos}</div><div class="stat-label">Inscrições</div></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon stat-icon-orange"></div>
-          <div><div class="stat-value">${pendingCount}</div><div class="stat-label">Pendentes Arena</div></div>
+      <div class="page-header">
+        <div class="container">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div><h1>Meus Eventos</h1><p>${myEvents.length} evento(s)</p></div>
+            <a href="#/criar-evento" class="btn btn-primary btn-sm">+ Novo evento</a>
+          </div>
         </div>
       </div>
-
-      <div class="section-header">
-        <div class="section-title">Eventos Recentes</div>
-        <a href="#/criar-evento" class="btn btn-primary btn-sm">+ Novo</a>
-      </div>
-      ${myEvents.length === 0
-        ? `<div class="card" style="padding:24px"><div class="empty-state">
+      <div class="container">
+        <div class="filter-bar">
+          ${['Todos','Vôlei','Futevôlei','Beach Tennis'].map((f,i) => `<button class="filter-chip ${i===0?'active':''}" data-filter="${f}">${f}</button>`).join('')}
+        </div>
+        <div class="events-grid" id="events-grid">
+          ${cards || `<div class="empty-state" style="grid-column:1/-1">
             <div class="empty-state-title">Nenhum evento criado</div>
             <p style="color:var(--gray-300);font-size:14px">Crie seu primeiro evento para começar.</p>
-          </div></div>`
-        : `<div class="events-grid">${cards}</div>`
-      }`;
+          </div>`}
+        </div>
+      </div>`;
 
+    bindFilters();
   } catch (err) {
     el.innerHTML = `<div class="empty-state"><p>${err.message}</p></div>`;
   }
+};
+
+// ── ADVANCED FILTERS ──
+window.applyAdvancedFilters = function() {
+  const events = window._homeEvents;
+  if (!events) return;
+  const cityVal = document.getElementById('filter-city')?.value || '';
+  const priceVal = document.getElementById('filter-price')?.value || '';
+  const dateVal = document.getElementById('filter-date')?.value || '';
+
+  document.querySelectorAll('.event-card').forEach(card => {
+    const modality = card.getAttribute('data-modality') || '';
+    const city = card.getAttribute('data-city') || '';
+    const fee = parseFloat(card.getAttribute('data-fee') || '0');
+    const eventDate = card.getAttribute('data-date') || '';
+
+    // Modality filter
+    const activeChip = document.querySelector('.filter-chip.active');
+    const modFilter = activeChip?.getAttribute('data-filter')?.toLowerCase() || 'todos';
+    let showMod = modFilter === 'todos' || modality.includes(modFilter.split(' ')[0].toLowerCase());
+
+    // City filter
+    let showCity = !cityVal || city === cityVal;
+
+    // Price filter
+    let showPrice = true;
+    if (priceVal === '0-50') showPrice = fee <= 50;
+    else if (priceVal === '50-100') showPrice = fee > 50 && fee <= 100;
+    else if (priceVal === '100-200') showPrice = fee > 100 && fee <= 200;
+    else if (priceVal === '200+') showPrice = fee > 200;
+
+    // Date filter
+    let showDate = true;
+    if (dateVal && eventDate) {
+      const evDate = new Date(eventDate);
+      const now = new Date();
+      const diffDays = (evDate - now) / (1000 * 60 * 60 * 24);
+      showDate = diffDays >= 0 && diffDays <= parseInt(dateVal);
+    }
+
+    card.style.display = (showMod && showCity && showPrice && showDate) ? '' : 'none';
+  });
 };
 
 // ── SHARE EVENT ──
