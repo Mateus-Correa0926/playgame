@@ -20,8 +20,15 @@ window.renderHome = async function(el) {
     const cards = events.map(e => buildEventCard(e)).join('');
 
     el.innerHTML = `
-      <div class="page-header"><div class="container"><h1>Eventos</h1><p>Encontre torneios para participar</p></div></div>
-      <div class="container">
+      <!-- Banner: Desktop 1100x280px / Mobile 100%x180px -->
+      <div class="hero-banner">
+        <img src="https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?w=1100&h=280&fit=crop&q=80" alt="PlayGAME Banner">
+        <div class="hero-banner-overlay">
+          <div class="hero-banner-title">Encontre seu próximo torneio</div>
+          <div class="hero-banner-sub">Eventos de vôlei, futevôlei e beach tennis na areia</div>
+        </div>
+      </div>
+      <div class="filter-section">
         <div class="filter-bar">
           ${['Todos','Vôlei','Futevôlei','Beach Tennis'].map((f,i) => `<button class="filter-chip ${i===0?'active':''}" data-filter="${f}">${f}</button>`).join('')}
         </div>
@@ -37,17 +44,22 @@ window.renderHome = async function(el) {
               <option value="100-200">R$ 100 — R$ 200</option>
               <option value="200+">Acima de R$ 200</option>
             </select>
-            <select class="form-control form-control-sm" id="filter-date" onchange="applyAdvancedFilters()">
-              <option value="">Qualquer data</option>
-              <option value="7">Próximos 7 dias</option>
-              <option value="30">Próximos 30 dias</option>
-              <option value="90">Próximos 3 meses</option>
-            </select>
+          </div>
+          <div class="filter-row" style="margin-top:10px">
+            <div class="date-filter-group">
+              <label class="date-filter-label">De</label>
+              <input type="date" class="form-control form-control-sm" id="filter-date-start" onchange="applyAdvancedFilters()">
+            </div>
+            <div class="date-filter-group">
+              <label class="date-filter-label">Até</label>
+              <input type="date" class="form-control form-control-sm" id="filter-date-end" onchange="applyAdvancedFilters()">
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="clearDateFilters()" style="align-self:flex-end">Limpar datas</button>
           </div>
         </div>
-        <div class="events-grid" id="events-grid">
-          ${cards || '<div class="empty-state" style="grid-column:1/-1"><p>Nenhum evento disponível</p></div>'}
-        </div>
+      </div>
+      <div class="events-grid" id="events-grid">
+        ${cards || '<div class="empty-state" style="grid-column:1/-1"><p>Nenhum evento disponível</p></div>'}
       </div>`;
 
     // Populate city filter
@@ -78,15 +90,18 @@ window.renderDashboard = async function(el) {
     const cards = myEvents.map(e => buildEventCard(e)).join('');
 
     el.innerHTML = `
-      <div class="page-header">
-        <div class="container">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <div><h1>Meus Eventos</h1><p>${myEvents.length} evento(s)</p></div>
-            <a href="#/criar-evento" class="btn btn-primary btn-sm">+ Novo evento</a>
-          </div>
+      <!-- Banner: Desktop 1100x280px / Mobile 100%x180px -->
+      <div class="hero-banner">
+        <img src="https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?w=1100&h=280&fit=crop&q=80" alt="PlayGAME Banner">
+        <div class="hero-banner-overlay">
+          <div class="hero-banner-title">Meus Eventos</div>
+          <div class="hero-banner-sub">${myEvents.length} evento(s) criados</div>
         </div>
       </div>
-      <div class="container">
+      <div class="filter-section">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+          <a href="#/criar-evento" class="btn btn-primary btn-sm">+ Novo evento</a>
+        </div>
         <div class="filter-bar">
           ${['Todos','Vôlei','Futevôlei','Beach Tennis'].map((f,i) => `<button class="filter-chip ${i===0?'active':''}" data-filter="${f}">${f}</button>`).join('')}
         </div>
@@ -110,7 +125,8 @@ window.applyAdvancedFilters = function() {
   if (!events) return;
   const cityVal = document.getElementById('filter-city')?.value || '';
   const priceVal = document.getElementById('filter-price')?.value || '';
-  const dateVal = document.getElementById('filter-date')?.value || '';
+  const dateStart = document.getElementById('filter-date-start')?.value || '';
+  const dateEnd = document.getElementById('filter-date-end')?.value || '';
 
   document.querySelectorAll('.event-card').forEach(card => {
     const modality = card.getAttribute('data-modality') || '';
@@ -133,17 +149,24 @@ window.applyAdvancedFilters = function() {
     else if (priceVal === '100-200') showPrice = fee > 100 && fee <= 200;
     else if (priceVal === '200+') showPrice = fee > 200;
 
-    // Date filter
+    // Date range filter
     let showDate = true;
-    if (dateVal && eventDate) {
+    if (eventDate) {
       const evDate = new Date(eventDate);
-      const now = new Date();
-      const diffDays = (evDate - now) / (1000 * 60 * 60 * 24);
-      showDate = diffDays >= 0 && diffDays <= parseInt(dateVal);
+      if (dateStart) showDate = evDate >= new Date(dateStart);
+      if (showDate && dateEnd) showDate = evDate <= new Date(dateEnd + 'T23:59:59');
     }
 
     card.style.display = (showMod && showCity && showPrice && showDate) ? '' : 'none';
   });
+};
+
+window.clearDateFilters = function() {
+  const s = document.getElementById('filter-date-start');
+  const e = document.getElementById('filter-date-end');
+  if (s) s.value = '';
+  if (e) e.value = '';
+  applyAdvancedFilters();
 };
 
 // ── SHARE EVENT ──
