@@ -487,11 +487,26 @@ textarea.form-control, textarea.form-input { resize: vertical; min-height: 100px
   text-transform: uppercase; letter-spacing: 0.5px;
 }
 
-/* ── INLINE CALENDAR ── */
+/* ── CALENDAR POPUP ── */
+.date-picker-trigger {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px; border-radius: var(--radius);
+  border: 1px solid var(--gray-200); background: #fff;
+  cursor: pointer; transition: all .15s;
+  font-size: 13px; color: var(--gray-400); font-weight: 500;
+  min-width: 160px;
+}
+.date-picker-trigger:hover { border-color: var(--gray-300); }
+.date-picker-trigger.has-value { color: var(--black); border-color: var(--orange); }
+.date-picker-trigger svg { color: var(--gray-400); flex-shrink: 0; }
+.cal-popup {
+  position: relative; z-index: 50;
+  margin-top: 8px;
+}
 .pg-calendar {
   background: #fff; border-radius: var(--radius-lg);
   border: 1px solid var(--gray-100); padding: 16px;
-  box-shadow: var(--shadow); margin-top: 12px;
+  box-shadow: var(--shadow-lg);
 }
 .cal-header {
   display: flex; align-items: center; justify-content: space-between;
@@ -560,9 +575,41 @@ textarea.form-control, textarea.form-input { resize: vertical; min-height: 100px
   background: rgba(240, 90, 26, 0.15); color: var(--orange); font-weight: 600;
   border-radius: 50%;
 }
+.cal-popup-footer {
+  border-top: 1px solid var(--gray-100); margin-top: 14px; padding-top: 14px;
+}
+.cal-input-row {
+  display: flex; gap: 12px; margin-bottom: 12px;
+}
+.cal-input-group {
+  flex: 1; display: flex; flex-direction: column; gap: 4px;
+}
+.cal-input-group label {
+  font-size: 11px; font-weight: 600; color: var(--gray-500);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.cal-input-wrap {
+  display: flex; align-items: center; position: relative;
+}
+.cal-date-input {
+  width: 100%; padding: 8px 30px 8px 10px; font-size: 13px;
+  border: 1px solid var(--gray-200); border-radius: var(--radius);
+  outline: none; font-family: var(--font-body);
+}
+.cal-date-input:focus { border-color: var(--orange); }
+.cal-input-clear {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; font-size: 16px; color: var(--gray-400);
+  cursor: pointer; padding: 0 4px; line-height: 1;
+}
+.cal-input-clear:hover { color: var(--orange); }
+.cal-filter-btn {
+  width: 100%; padding: 10px; font-size: 14px; font-weight: 700;
+}
 @media (max-width: 768px) {
   .pg-calendar { padding: 12px; }
   .cal-day { width: 32px; height: 32px; font-size: 12px; }
+  .cal-input-row { flex-direction: column; gap: 8px; }
 }
 
 /* ── EVENT CARDS ── */

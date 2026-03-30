@@ -45,7 +45,35 @@ window.renderHome = async function(el) {
               <option value="200+">Acima de R$ 200</option>
             </select>
           </div>
-          <div id="pg-calendar-wrap"></div>
+          </div>
+          <div class="filter-row" style="margin-top:10px">
+            <div class="date-picker-trigger" id="date-picker-trigger" onclick="toggleCalendarPopup()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <span id="date-picker-label">Quando?</span>
+            </div>
+          </div>
+          <div class="cal-popup" id="cal-popup" style="display:none">
+            <div id="pg-calendar-wrap"></div>
+            <div class="cal-popup-footer">
+              <div class="cal-input-row">
+                <div class="cal-input-group">
+                  <label>De</label>
+                  <div class="cal-input-wrap">
+                    <input type="text" class="cal-date-input" id="cal-input-start" placeholder="dd/mm/aaaa" maxlength="10" oninput="calMaskDate(this)" onchange="calInputChanged()">
+                    <button class="cal-input-clear" onclick="calClearInput('start')">&times;</button>
+                  </div>
+                </div>
+                <div class="cal-input-group">
+                  <label>Até</label>
+                  <div class="cal-input-wrap">
+                    <input type="text" class="cal-date-input" id="cal-input-end" placeholder="dd/mm/aaaa" maxlength="10" oninput="calMaskDate(this)" onchange="calInputChanged()">
+                    <button class="cal-input-clear" onclick="calClearInput('end')">&times;</button>
+                  </div>
+                </div>
+              </div>
+              <button class="btn btn-primary btn-sm cal-filter-btn" onclick="calApplyAndClose()">Filtrar</button>
+            </div>
+          </div>
         </div>
       </div>
       <div class="events-grid" id="events-grid">
@@ -110,15 +138,98 @@ window.renderDashboard = async function(el) {
   }
 };
 
-// ── INLINE CALENDAR WIDGET ──
+// ── CALENDAR POPUP WIDGET ──
 window._calState = { year: 0, month: 0, start: null, end: null, range: false };
 
 window.initCalendarWidget = function() {
-  const wrap = document.getElementById('pg-calendar-wrap');
-  if (!wrap) return;
   const now = new Date();
   window._calState = { year: now.getFullYear(), month: now.getMonth(), start: null, end: null, range: false };
   renderCalendar();
+  document.addEventListener('click', function(e) {
+    const popup = document.getElementById('cal-popup');
+    const trigger = document.getElementById('date-picker-trigger');
+    if (popup && popup.style.display !== 'none' && !popup.contains(e.target) && !trigger.contains(e.target)) {
+      popup.style.display = 'none';
+    }
+  });
+};
+
+window.toggleCalendarPopup = function() {
+  const popup = document.getElementById('cal-popup');
+  if (!popup) return;
+  popup.style.display = popup.style.display === 'none' ? 'block' : 'none';
+  if (popup.style.display === 'block') renderCalendar();
+};
+
+function fmtBR(isoStr) {
+  if (!isoStr) return '';
+  const [y, m, d] = isoStr.split('-');
+  return `${d}/${m}/${y}`;
+}
+function parseBR(br) {
+  const match = br.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!match) return null;
+  const [, d, mo, y] = match;
+  const dt = new Date(+y, +mo - 1, +d);
+  if (dt.getDate() !== +d || dt.getMonth() !== +mo - 1) return null;
+  return `${y}-${mo}-${d}`;
+}
+
+window.calMaskDate = function(input) {
+  let v = input.value.replace(/\D/g, '');
+  if (v.length > 2) v = v.slice(0,2) + '/' + v.slice(2);
+  if (v.length > 5) v = v.slice(0,5) + '/' + v.slice(5,9);
+  input.value = v;
+};
+
+window.calInputChanged = function() {
+  const startInput = document.getElementById('cal-input-start');
+  const endInput = document.getElementById('cal-input-end');
+  const s = window._calState;
+  const startISO = parseBR(startInput?.value || '');
+  const endISO = parseBR(endInput?.value || '');
+  if (startISO) s.start = startISO;
+  if (endISO) { s.end = endISO; s.range = true; }
+  renderCalendar();
+};
+
+window.calClearInput = function(which) {
+  const s = window._calState;
+  if (which === 'start') {
+    s.start = null;
+    const el = document.getElementById('cal-input-start');
+    if (el) el.value = '';
+  } else {
+    s.end = null;
+    const el = document.getElementById('cal-input-end');
+    if (el) el.value = '';
+  }
+  renderCalendar();
+};
+
+window.updateCalInputs = function() {
+  const { start, end } = window._calState;
+  const si = document.getElementById('cal-input-start');
+  const ei = document.getElementById('cal-input-end');
+  if (si) si.value = fmtBR(start);
+  if (ei) ei.value = fmtBR(end);
+};
+
+window.updateTriggerLabel = function() {
+  const label = document.getElementById('date-picker-label');
+  const trigger = document.getElementById('date-picker-trigger');
+  if (!label) return;
+  const { start, end } = window._calState;
+  if (start && end) {
+    label.textContent = `${fmtBR(start)} — ${fmtBR(end)}`;
+    trigger.classList.add('has-value');
+  } else if (start) {
+    label.textContent = fmtBR(start);
+    trigger.classList.add('has-value');
+  } else {
+    label.textContent = 'Quando?';
+    trigger.classList.remove('has-value');
+  }
 };
 
 window.renderCalendar = function() {
@@ -129,16 +240,14 @@ window.renderCalendar = function() {
   const days = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
 
   const first = new Date(year, month, 1);
-  let startDay = first.getDay() - 1; // Mon=0
+  let startDay = first.getDay() - 1;
   if (startDay < 0) startDay = 6;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
 
   let cells = '';
-  // Empty cells before first day
   for (let i = 0; i < startDay; i++) cells += '<div class="cal-cell cal-empty"></div>';
-  // Day cells
   for (let d = 1; d <= daysInMonth; d++) {
     const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     let cls = 'cal-day';
@@ -171,6 +280,8 @@ window.renderCalendar = function() {
       <div class="cal-weekdays">${days.map(d => `<div class="cal-wk">${d}</div>`).join('')}</div>
       <div class="cal-grid">${cells}</div>
     </div>`;
+
+  updateCalInputs();
 };
 
 window.calNav = function(dir) {
@@ -185,17 +296,14 @@ window.calSetMode = function(isRange) {
   window._calState.start = null;
   window._calState.end = null;
   renderCalendar();
-  applyAdvancedFilters();
 };
 
 window.calDayClick = function(dateStr) {
   const s = window._calState;
   if (!s.range) {
-    // Single date mode – toggle
     s.start = (s.start === dateStr) ? null : dateStr;
     s.end = null;
   } else {
-    // Range mode
     if (!s.start || (s.start && s.end)) {
       s.start = dateStr; s.end = null;
     } else {
@@ -205,14 +313,22 @@ window.calDayClick = function(dateStr) {
     }
   }
   renderCalendar();
-  applyAdvancedFilters();
 };
 
 window.calClear = function() {
   window._calState.start = null;
   window._calState.end = null;
   renderCalendar();
+  updateTriggerLabel();
   applyAdvancedFilters();
+};
+
+window.calApplyAndClose = function() {
+  calInputChanged();
+  updateTriggerLabel();
+  applyAdvancedFilters();
+  const popup = document.getElementById('cal-popup');
+  if (popup) popup.style.display = 'none';
 };
 
 // ── ADVANCED FILTERS ──
@@ -257,7 +373,7 @@ window.applyAdvancedFilters = function() {
   });
 };
 
-window.clearDateFilters = function() { calClear(); };
+window.clearDateFilters = function() { calClear(); updateTriggerLabel(); };
 
 // ── SHARE EVENT ──
 window.shareEvent = async function(title, id) {
