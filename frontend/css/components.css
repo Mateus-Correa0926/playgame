@@ -37,7 +37,7 @@
   pointer-events: none;
 }
 .hero-banner::before {
-  content: '⛱'; position: absolute; right: 20px; bottom: 10px;
+  content: ''; position: absolute; right: 20px; bottom: 10px;
   font-size: 5rem; opacity: .06; pointer-events: none;
 }
 .hero-greeting { color: rgba(255,255,255,.5); font-size: .78rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 4px; }

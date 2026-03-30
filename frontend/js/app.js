@@ -179,24 +179,24 @@ function updateSidebar(user) {
   const isOrg = user.role === 'organizador';
   const navItems = isOrg ? `
     <div class="nav-section-title">Principal</div>
-    <a class="nav-item ${hash === '#/' || hash === '#/dashboard' ? 'active' : ''}" href="#/">🏠 Dashboard</a>
-    <a class="nav-item ${hash === '#/criar-evento' ? 'active' : ''}" href="#/criar-evento">➕ Novo Evento</a>
-    <a class="nav-item ${hash === '#/eventos' ? 'active' : ''}" href="#/eventos">🏆 Eventos</a>
+    <a class="nav-item ${hash === '#/' || hash === '#/dashboard' ? 'active' : ''}" href="#/">Dashboard</a>
+    <a class="nav-item ${hash === '#/criar-evento' ? 'active' : ''}" href="#/criar-evento">Novo Evento</a>
+    <a class="nav-item ${hash === '#/eventos' ? 'active' : ''}" href="#/eventos">Eventos</a>
     <div class="nav-section-title">Gerenciar</div>
-    <a class="nav-item ${hash === '#/arenas' ? 'active' : ''}" href="#/arenas">🏟 Arenas</a>
-    <a class="nav-item ${hash === '#/atletas' ? 'active' : ''}" href="#/atletas">👥 Atletas</a>
+    <a class="nav-item ${hash === '#/arenas' ? 'active' : ''}" href="#/arenas">Arenas</a>
+    <a class="nav-item ${hash === '#/atletas' ? 'active' : ''}" href="#/atletas">Atletas</a>
     <div class="nav-section-title">Conta</div>
-    <a class="nav-item ${hash === '#/perfil' ? 'active' : ''}" href="#/perfil">👤 Perfil</a>
-    <a class="nav-item ${hash === '#/configuracoes' ? 'active' : ''}" href="#/configuracoes">⚙️ Configurações</a>
+    <a class="nav-item ${hash === '#/perfil' ? 'active' : ''}" href="#/perfil">Perfil</a>
+    <a class="nav-item ${hash === '#/configuracoes' ? 'active' : ''}" href="#/configuracoes">Configurações</a>
   ` : `
     <div class="nav-section-title">Principal</div>
-    <a class="nav-item ${hash === '#/' || hash === '' ? 'active' : ''}" href="#/">🏠 Início</a>
-    <a class="nav-item ${hash === '#/eventos' ? 'active' : ''}" href="#/eventos">🏆 Eventos</a>
-    <a class="nav-item ${hash === '#/busca' ? 'active' : ''}" href="#/busca">🔍 Buscar</a>
+    <a class="nav-item ${hash === '#/' || hash === '' ? 'active' : ''}" href="#/">Início</a>
+    <a class="nav-item ${hash === '#/eventos' ? 'active' : ''}" href="#/eventos">Eventos</a>
+    <a class="nav-item ${hash === '#/busca' ? 'active' : ''}" href="#/busca">Buscar</a>
     <div class="nav-section-title">Minha Conta</div>
-    <a class="nav-item ${hash === '#/minhas-inscricoes' ? 'active' : ''}" href="#/minhas-inscricoes">📋 Inscrições</a>
-    <a class="nav-item ${hash === '#/perfil' ? 'active' : ''}" href="#/perfil">👤 Perfil</a>
-    <a class="nav-item ${hash === '#/configuracoes' ? 'active' : ''}" href="#/configuracoes">⚙️ Configurações</a>
+    <a class="nav-item ${hash === '#/minhas-inscricoes' ? 'active' : ''}" href="#/minhas-inscricoes">Inscrições</a>
+    <a class="nav-item ${hash === '#/perfil' ? 'active' : ''}" href="#/perfil">Perfil</a>
+    <a class="nav-item ${hash === '#/configuracoes' ? 'active' : ''}" href="#/configuracoes">Configurações</a>
   `;
 
   navEl.innerHTML = navItems;
@@ -208,7 +208,7 @@ function updateSidebar(user) {
         <div class="sidebar-user-role">${user.role}</div>
       </div>
     </div>
-    <button class="nav-item" id="logout-btn" style="color:var(--gray-500)">🚪 Sair</button>
+    <button class="nav-item" id="logout-btn" style="color:var(--gray-500)">Sair</button>
   `;
 }
 
@@ -242,7 +242,7 @@ function renderAuthPage(hash) {
 function buildLoginPage() {
   return `<div class="auth-page">
     <div class="auth-logo">PLAY<span>GAME</span></div>
-    <div class="auth-subtitle">🏖 Eventos Esportivos de Areia</div>
+    <div class="auth-subtitle">Eventos Esportivos de Areia</div>
     <div class="auth-card">
       <h2 style="font-size:1.5rem;margin-bottom:20px">Entrar na conta</h2>
       <form id="login-form">
@@ -292,16 +292,16 @@ function buildRegisterPage() {
   const modalitiesOptions = MODALITIES.map(m => `<option value="${m}">${getModalityLabel(m)}</option>`).join('');
   return `<div class="auth-page" style="padding-top:32px;padding-bottom:32px">
     <div class="auth-logo">PLAY<span>GAME</span></div>
-    <div class="auth-subtitle">🏖 Crie sua conta</div>
+    <div class="auth-subtitle">Crie sua conta</div>
     <div class="auth-card" style="max-width:460px">
       <div class="role-selector" id="role-selector">
         <div class="role-option selected" data-role="atleta">
-          <div class="role-icon">🏃</div>
+          <div class="role-icon">A</div>
           <div class="role-label">Atleta</div>
           <div class="role-desc">Me inscrevo em eventos</div>
         </div>
         <div class="role-option" data-role="organizador">
-          <div class="role-icon">📋</div>
+          <div class="role-icon">O</div>
           <div class="role-label">Organizador</div>
           <div class="role-desc">Crio e gerencio eventos</div>
         </div>
@@ -451,7 +451,7 @@ async function renderHome(el) {
     el.innerHTML = buildHomeHTML(events, user);
     bindFilters();
   } catch (err) {
-    el.innerHTML = `<div class="container"><div class="empty-state"><div class="icon">⚡</div><p>${err.message}</p></div></div>`;
+    el.innerHTML = `<div class="container"><div class="empty-state"><div class="icon"></div><p>${err.message}</p></div></div>`;
   }
 }
 
@@ -465,14 +465,14 @@ function buildHomeHTML(events, user) {
   return `
     <div style="margin-bottom:24px">
       <h2 style="font-family:var(--font-display);font-size:28px;font-weight:900;text-transform:uppercase">
-        Olá, ${user ? user.name.split(' ')[0] : 'Visitante'}! 👋
+        Olá, ${user ? user.name.split(' ')[0] : 'Visitante'}!
       </h2>
       <p style="color:var(--gray-500);margin-top:4px">Aqui está seu resumo de hoje.</p>
     </div>
 
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-icon stat-icon-orange">🏅</div>
+        <div class="stat-icon stat-icon-orange"></div>
         <div><div class="stat-value">0</div><div class="stat-label">Minhas Inscrições</div></div>
       </div>
       <div class="stat-card">
@@ -480,21 +480,21 @@ function buildHomeHTML(events, user) {
         <div><div class="stat-value">${confirmedEvents}</div><div class="stat-label">Eventos Disponíveis</div></div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon stat-icon-black">👥</div>
+        <div class="stat-icon stat-icon-black"></div>
         <div><div class="stat-value">${totalAthletes}</div><div class="stat-label">Atletas na Plataforma</div></div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon stat-icon-orange">🏆</div>
+        <div class="stat-icon stat-icon-orange"></div>
         <div><div class="stat-value">${pendingEvents}</div><div class="stat-label">Em Andamento</div></div>
       </div>
     </div>
 
     <div class="section-header">
       <div class="section-title">Eventos Disponíveis</div>
-      <a href="#/eventos" style="font-size:13px;color:var(--orange);text-decoration:none;font-weight:600">Ver todos →</a>
+      <a href="#/eventos" style="font-size:13px;color:var(--orange);text-decoration:none;font-weight:600">Ver todos</a>
     </div>
     <div class="events-grid">
-      ${cards || `<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon" style="font-size:48px">🏆</div><div class="empty-state-title">Nenhum evento disponível</div></div>`}
+      ${cards || `<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-title">Nenhum evento disponível</div></div>`}
     </div>`;
 }
 
@@ -505,7 +505,7 @@ function buildEventCard(e) {
   const pctFull = limit > 0 ? Math.min(100, Math.round(paid / limit * 100)) : 0;
   const statusMap = {
     confirmado: { cls: 'badge-confirmed', text: '✓ Confirmado' },
-    pendente: { cls: 'badge-pending', text: '⏳ Pendente' },
+    pendente: { cls: 'badge-pending', text: 'Pendente' },
     cancelado: { cls: 'badge-rejected', text: '✕ Rejeitado' },
     encerrado: { cls: 'badge-rejected', text: 'Encerrado' },
   };
@@ -522,9 +522,9 @@ function buildEventCard(e) {
       <div class="event-card-body">
         <div class="event-card-title">${e.title}</div>
         <div class="event-meta">
-          <div class="event-meta-item">📅 ${formatDate(e.event_date)}${e.start_time ? ' • ' + (e.start_time||'').slice(0,5) : ''}</div>
-          <div class="event-meta-item">📍 ${e.arena_name || 'Arena'}${e.arena_city ? ', ' + e.arena_city : ''}</div>
-          <div class="event-meta-item">👥 ${paid} / ${limit} times</div>
+          <div class="event-meta-item">${formatDate(e.event_date)}${e.start_time ? ' • ' + (e.start_time||'').slice(0,5) : ''}</div>
+          <div class="event-meta-item">${e.arena_name || 'Arena'}${e.arena_city ? ', ' + e.arena_city : ''}</div>
+          <div class="event-meta-item">${paid} / ${limit} times</div>
         </div>
         <div class="progress-bar"><div class="progress-fill" style="width:${pctFull}%"></div></div>
         <div style="font-size:11px;color:var(--gray-300);margin-top:4px;text-align:right">${pctFull}% preenchido</div>
@@ -569,7 +569,7 @@ async function renderEventDetail(el, id) {
     el.innerHTML = buildEventDetailHTML(ev, user, isOwner, myReg);
     bindEventDetailActions(ev, user, myReg);
   } catch (err) {
-    el.innerHTML = `<div class="container"><div class="empty-state"><div class="icon">⚡</div><p>${err.message}</p></div></div>`;
+    el.innerHTML = `<div class="container"><div class="empty-state"><div class="icon"></div><p>${err.message}</p></div></div>`;
   }
 }
 
@@ -621,9 +621,9 @@ function buildEventDetailHTML(ev, user, isOwner, myReg) {
       <div class="card-body">
         <div style="font-size:.78rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">Ações do Organizador</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-outline btn-sm" onclick="openEditEventModal(${ev.id})">✏️ Editar evento</button>
-          <button class="btn btn-secondary btn-sm" onclick="confirmArena(${ev.id})">📍 Confirmar arena</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteEvent(${ev.id})">🗑 Excluir</button>
+          <button class="btn btn-outline btn-sm" onclick="openEditEventModal(${ev.id})">Editar evento</button>
+          <button class="btn btn-secondary btn-sm" onclick="confirmArena(${ev.id})">Confirmar arena</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteEvent(${ev.id})">Excluir</button>
         </div>
       </div>
     </div>` : '';
@@ -634,9 +634,9 @@ function buildEventDetailHTML(ev, user, isOwner, myReg) {
       <div class="event-detail-modality">${getModalityLabel(ev.modality)}</div>
       <div class="event-detail-title">${ev.title}</div>
       <div class="event-detail-meta">
-        <div class="event-detail-meta-row">📅 ${formatDate(ev.event_date)} às ${(ev.start_time||'').slice(0,5)}</div>
-        <div class="event-detail-meta-row">📍 ${ev.arena_name} — ${ev.arena_address}, ${ev.arena_city}/${ev.arena_state}</div>
-        <div class="event-detail-meta-row">👤 Organizado por ${ev.organizer_name}</div>
+        <div class="event-detail-meta-row">${formatDate(ev.event_date)} às ${(ev.start_time||'').slice(0,5)}</div>
+        <div class="event-detail-meta-row">${ev.arena_name} — ${ev.arena_address}, ${ev.arena_city}/${ev.arena_state}</div>
+        <div class="event-detail-meta-row">Organizado por ${ev.organizer_name}</div>
       </div>
     </div>
 
@@ -644,16 +644,16 @@ function buildEventDetailHTML(ev, user, isOwner, myReg) {
       ${orgActions}
 
       <div class="stats-row">
-        <div class="stat-card"><div class="stat-icon stat-icon-orange">💰</div><div><div class="stat-value">${formatCurrency(ev.registration_fee)}</div><div class="stat-label">Inscrição</div></div></div>
-        <div class="stat-card"><div class="stat-icon stat-icon-black">🎯</div><div><div class="stat-value">${ev.participant_limit}</div><div class="stat-label">Vagas (pagos)</div></div></div>
-        <div class="stat-card"><div class="stat-icon stat-icon-military">✅</div><div><div class="stat-value">${paid.length}</div><div class="stat-label">Confirmados</div></div></div>
-        <div class="stat-card"><div class="stat-icon stat-icon-orange">⏳</div><div><div class="stat-value">${pending.length}</div><div class="stat-label">Aguardando</div></div></div>
+        <div class="stat-card"><div class="stat-icon stat-icon-orange"></div><div><div class="stat-value">${formatCurrency(ev.registration_fee)}</div><div class="stat-label">Inscrição</div></div></div>
+        <div class="stat-card"><div class="stat-icon stat-icon-black"></div><div><div class="stat-value">${ev.participant_limit}</div><div class="stat-label">Vagas (pagos)</div></div></div>
+        <div class="stat-card"><div class="stat-icon stat-icon-military"></div><div><div class="stat-value">${paid.length}</div><div class="stat-label">Confirmados</div></div></div>
+        <div class="stat-card"><div class="stat-icon stat-icon-orange"></div><div><div class="stat-value">${pending.length}</div><div class="stat-label">Aguardando</div></div></div>
       </div>
 
       <!-- Arena Status -->
       <div class="card mb-12">
         <div class="card-body" style="display:flex;align-items:center;gap:12px">
-          <div style="font-size:1.5rem">${ev.arena_confirmed ? '✅' : '⏳'}</div>
+          <div style="font-size:1.5rem">${ev.arena_confirmed ? 'Sim' : 'Não'}</div>
           <div>
             <div style="font-weight:700;font-size:.9rem">Arena: ${ev.arena_name}</div>
             <div class="text-muted">${ev.arena_confirmed ? 'Evento confirmado pela arena!' : 'Aguardando confirmação da arena'}</div>
@@ -672,13 +672,13 @@ function buildEventDetailHTML(ev, user, isOwner, myReg) {
 
       <div id="tab-info" class="tab-content">
         ${ev.description ? `<div class="card mb-12"><div class="card-body"><h3 style="font-size:1rem;margin-bottom:8px">Sobre o evento</h3><p style="font-size:.9rem;color:var(--text-secondary)">${ev.description}</p></div></div>` : ''}
-        ${ev.rules ? `<div class="card mb-12"><div class="card-body"><h3 style="font-size:1rem;margin-bottom:8px">📋 Regras</h3><p style="font-size:.9rem;color:var(--text-secondary);white-space:pre-wrap">${ev.rules}</p></div></div>` : ''}
+        ${ev.rules ? `<div class="card mb-12"><div class="card-body"><h3 style="font-size:1rem;margin-bottom:8px">Regras</h3><p style="font-size:.9rem;color:var(--text-secondary);white-space:pre-wrap">${ev.rules}</p></div></div>` : ''}
         <div class="card mb-12">
           <div class="card-body">
-            <h3 style="font-size:1rem;margin-bottom:10px">📍 Local</h3>
+            <h3 style="font-size:1rem;margin-bottom:10px">Local</h3>
             <div style="font-weight:600">${ev.arena_name}</div>
             <div class="text-muted">${ev.arena_address}, ${ev.arena_city} - ${ev.arena_state}</div>
-            ${ev.arena_phone ? `<div class="text-muted">📞 ${ev.arena_phone}</div>` : ''}
+            ${ev.arena_phone ? `<div class="text-muted">${ev.arena_phone}</div>` : ''}
           </div>
         </div>
         <div style="margin-top:16px">${registrationActions}</div>
@@ -811,7 +811,7 @@ function openRegisterModal(eventId, ev) {
           </div>
           <div class="card" style="background:var(--orange-xlight)">
             <div class="card-body" style="padding:12px">
-              <div style="font-weight:700;color:var(--orange)">💰 Valor da inscrição: ${formatCurrency(ev.registration_fee)}</div>
+              <div style="font-weight:700;color:var(--orange)">Valor da inscrição: ${formatCurrency(ev.registration_fee)}</div>
               <div style="font-size:.8rem;color:var(--text-secondary);margin-top:4px">O pagamento deve ser confirmado pelo organizador.</div>
             </div>
           </div>
@@ -954,7 +954,7 @@ async function renderEventList(el) {
       <div class="page-header"><div class="container"><h1>Todos os Eventos</h1></div></div>
       <div class="container">
         <div class="filter-bar">${['Todos','Vôlei','Futevôlei','Beach Tennis'].map((f,i) => `<button class="filter-chip ${i===0?'active':''}" data-filter="${f}">${f}</button>`).join('')}</div>
-        <div class="events-grid" id="events-grid">${cards || '<div class="empty-state" style="grid-column:1/-1"><div class="icon">🏖</div><p>Nenhum evento disponível</p></div>'}</div>
+        <div class="events-grid" id="events-grid">${cards || '<div class="empty-state" style="grid-column:1/-1"><p>Nenhum evento disponível</p></div>'}</div>
       </div>`;
     bindFilters();
   } catch (err) {
@@ -981,12 +981,12 @@ async function renderMyRegistrations(el) {
             <span class="athlete-status-badge ${r.payment_status==='pago'?'badge-paid':'badge-pending'}">${r.payment_status==='pago'?'✓ Pago':'Pendente'}</span>
           </div>
           <div class="event-card-meta">
-            <div class="event-meta-row"><span class="icon">📅</span>${formatDate(r.event_date)}</div>
-            <div class="event-meta-row"><span class="icon">📍</span>${r.arena_name}, ${r.arena_city}</div>
-            <div class="event-meta-row"><span class="icon">💰</span>${formatCurrency(r.registration_fee)}</div>
+            <div class="event-meta-row"><span class="icon"></span>${formatDate(r.event_date)}</div>
+            <div class="event-meta-row"><span class="icon"></span>${r.arena_name}, ${r.arena_city}</div>
+            <div class="event-meta-row"><span class="icon"></span>${formatCurrency(r.registration_fee)}</div>
           </div>
         </div>
-      </div>`).join('') || '<div class="empty-state"><div class="icon">🏐</div><p>Você ainda não está inscrito em nenhum evento.<br><a href="#/" style="color:var(--orange)">Ver eventos disponíveis</a></p></div>';
+      </div>`).join('') || '<div class="empty-state"><p>Você ainda não está inscrito em nenhum evento.<br><a href="#/" style="color:var(--orange)">Ver eventos disponíveis</a></p></div>';
 
     el.innerHTML = `
       <div class="page-header"><div class="container"><h1>Minhas Inscrições</h1></div></div>
@@ -1016,14 +1016,14 @@ async function renderDashboard(el) {
     el.innerHTML = `
       <div style="margin-bottom:24px">
         <h2 style="font-family:var(--font-display);font-size:28px;font-weight:900;text-transform:uppercase">
-          Olá, ${user?.name?.split(' ')[0]}! 👋
+          Olá, ${user?.name?.split(' ')[0]}!
         </h2>
         <p style="color:var(--gray-500);margin-top:4px">Aqui está seu resumo de hoje.</p>
       </div>
 
       <div class="stats-grid">
         <div class="stat-card">
-          <div class="stat-icon stat-icon-orange">🏆</div>
+          <div class="stat-icon stat-icon-orange"></div>
           <div><div class="stat-value">${myEvents.length}</div><div class="stat-label">Meus Eventos</div></div>
         </div>
         <div class="stat-card">
@@ -1031,11 +1031,11 @@ async function renderDashboard(el) {
           <div><div class="stat-value">${confirmedCount}</div><div class="stat-label">Confirmados</div></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon stat-icon-black">👥</div>
+          <div class="stat-icon stat-icon-black"></div>
           <div><div class="stat-value">${totalInscritos}</div><div class="stat-label">Inscrições</div></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon stat-icon-orange">🔔</div>
+          <div class="stat-icon stat-icon-orange"></div>
           <div><div class="stat-value">${pendingCount}</div><div class="stat-label">Pendentes Arena</div></div>
         </div>
       </div>
@@ -1046,7 +1046,6 @@ async function renderDashboard(el) {
       </div>
       ${myEvents.length === 0
         ? `<div class="card" style="padding:24px"><div class="empty-state">
-            <div class="empty-state-icon" style="font-size:48px">🏆</div>
             <div class="empty-state-title">Nenhum evento criado</div>
             <p style="color:var(--gray-300);font-size:14px">Crie seu primeiro evento para começar.</p>
           </div></div>`
@@ -1070,13 +1069,13 @@ async function renderProfile(el) {
           <div class="profile-avatar-section">
             <div class="profile-avatar-xl" onclick="$('#avatar-input').click()">
               ${user.avatar ? `<img src="${user.avatar}" alt="">` : avatarInitials(user.name)}
-              <div class="avatar-overlay">📷</div>
+              <div class="avatar-overlay">Foto</div>
               <input type="file" id="avatar-input" accept="image/*" style="display:none" onchange="uploadAvatar(this)">
             </div>
           </div>
           <div class="profile-name-section">
             <div class="profile-display-name">${user.name}</div>
-            <div class="profile-role-chip ${user.role === 'organizador' ? 'chip-organizer' : 'chip-athlete'}">${user.role === 'organizador' ? '🏅 Organizador' : '🏃 Atleta'}</div>
+            <div class="profile-role-chip ${user.role === 'organizador' ? 'chip-organizer' : 'chip-athlete'}">${user.role === 'organizador' ? 'Organizador' : 'Atleta'}</div>
           </div>
 
           <div class="profile-section-title">Informações pessoais</div>
@@ -1181,10 +1180,10 @@ async function renderArenas(el) {
         <div class="card-body">
           <div style="font-weight:700;font-size:1.05rem">${a.name}</div>
           <div class="text-muted">${a.address}, ${a.city} - ${a.state}</div>
-          ${a.phone ? `<div class="text-muted">📞 ${a.phone}</div>` : ''}
+          ${a.phone ? `<div class="text-muted">${a.phone}</div>` : ''}
           ${a.description ? `<div style="margin-top:8px;font-size:.85rem;color:var(--text-secondary)">${a.description}</div>` : ''}
         </div>
-      </div>`).join('') || '<div class="empty-state"><div class="icon">🏟</div><p>Nenhuma arena cadastrada.</p></div>';
+      </div>`).join('') || '<div class="empty-state"><div class="icon"></div><p>Nenhuma arena cadastrada.</p></div>';
 
     el.innerHTML = `
       <div class="page-header">

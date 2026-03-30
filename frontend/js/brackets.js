@@ -5,7 +5,7 @@ window.renderBrackets = async function(el, eventId) {
   el.innerHTML = `
     <div style="background:var(--black);padding:16px">
       <button class="back-btn" onclick="navigate('#/eventos/${eventId}')" style="color:rgba(255,255,255,.7)">← Voltar ao evento</button>
-      <h1 style="color:var(--white);font-size:1.6rem">🏆 Chaveamento</h1>
+      <h1 style="color:var(--white);font-size:1.6rem">Chaveamento</h1>
     </div>
     <div class="container" style="padding-top:16px">
       <div class="loading"><div class="spinner"></div></div>
@@ -26,10 +26,10 @@ window.renderBrackets = async function(el, eventId) {
         <button class="back-btn" onclick="navigate('#/eventos/${eventId}')" style="color:rgba(255,255,255,.7);margin-bottom:8px">← Voltar ao evento</button>
         <div style="display:flex;align-items:center;justify-content:space-between">
           <div>
-            <h1 style="color:var(--white);font-size:1.6rem;margin-bottom:2px">🏆 Chaveamento</h1>
+            <h1 style="color:var(--white);font-size:1.6rem;margin-bottom:2px">Chaveamento</h1>
             <div style="color:rgba(255,255,255,.5);font-size:.82rem">${eventData?.title || ''}</div>
           </div>
-          ${isOwner ? `<button class="btn btn-primary btn-sm" onclick="generateBracket(${eventId})">⚡ Gerar</button>` : ''}
+          ${isOwner ? `<button class="btn btn-primary btn-sm" onclick="generateBracket(${eventId})">Gerar</button>` : ''}
         </div>
       </div>
       <div class="container" style="padding-top:16px" id="bracket-container">
@@ -37,7 +37,7 @@ window.renderBrackets = async function(el, eventId) {
       </div>`;
   } catch (err) {
     const c = document.getElementById('page-content');
-    if (c) c.innerHTML = `<div class="container" style="padding-top:20px"><div class="alert alert-error"><span class="alert-icon">⚠️</span>${err.message}</div></div>`;
+    if (c) c.innerHTML = `<div class="container" style="padding-top:20px"><div class="alert alert-error">${err.message}</div></div>`;
   }
 };
 
@@ -48,9 +48,8 @@ function buildBracketHTML(data, isOwner, eventId) {
   if (roundKeys.length === 0) {
     return `
       <div class="empty-state">
-        <div class="icon">🏆</div>
         <p>Nenhum chaveamento gerado ainda.</p>
-        ${isOwner ? `<button class="btn btn-primary" style="margin-top:14px" onclick="generateBracket(${eventId})">⚡ Gerar Chaveamento</button>` : '<p class="text-muted" style="margin-top:8px">Aguarde o organizador gerar o chaveamento.</p>'}
+        ${isOwner ? `<button class="btn btn-primary" style="margin-top:14px" onclick="generateBracket(${eventId})">Gerar Chaveamento</button>` : '<p class="text-muted" style="margin-top:8px">Aguarde o organizador gerar o chaveamento.</p>'}
       </div>`;
   }
 
@@ -60,7 +59,7 @@ function buildBracketHTML(data, isOwner, eventId) {
     const matches = rounds[round];
     const totalRounds = roundKeys.length;
     const roundName = roundNames[parseInt(round)] ||
-      (parseInt(round) === totalRounds ? '🥇 Final' : `Rodada ${round}`);
+      (parseInt(round) === totalRounds ? 'Final' : `Rodada ${round}`);
 
     const matchCards = matches.map(m => buildMatchCard(m, isOwner)).join('');
     return `
@@ -94,7 +93,7 @@ function buildMatchCard(m, isOwner) {
         <!-- Time 1 -->
         <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--gray-border)">
           <div style="width:28px;height:28px;border-radius:50%;background:${isWin1?'var(--green)':'var(--gray-border)'};display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:${isWin1?'var(--white)':'var(--text-muted)'}">
-            ${m.team1_reg_id ? (isWin1 ? '🥇' : '1') : '—'}
+            ${m.team1_reg_id ? (isWin1 ? 'W' : '1') : '—'}
           </div>
           <div style="flex:1;font-weight:${isWin1?700:500};font-size:.9rem;color:${isWin1?'var(--green)':done&&!isWin1?'var(--text-muted)':'var(--text-primary)'}">${t1name}</div>
           <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:800;color:${isWin1?'var(--green)':'var(--text-primary)';}">${m.team1_score ?? (done ? '—' : '')}</div>
@@ -102,7 +101,7 @@ function buildMatchCard(m, isOwner) {
         <!-- Time 2 -->
         <div style="display:flex;align-items:center;gap:10px;padding:8px 0">
           <div style="width:28px;height:28px;border-radius:50%;background:${isWin2?'var(--green)':'var(--gray-border)'};display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:${isWin2?'var(--white)':'var(--text-muted)'}">
-            ${m.team2_reg_id ? (isWin2 ? '🥇' : '2') : '—'}
+            ${m.team2_reg_id ? (isWin2 ? 'W' : '2') : '—'}
           </div>
           <div style="flex:1;font-weight:${isWin2?700:500};font-size:.9rem;color:${isWin2?'var(--green)':done&&!isWin2?'var(--text-muted)':'var(--text-primary)'}">${t2name}</div>
           <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:800;color:${isWin2?'var(--green)':'var(--text-primary)';}">${m.team2_score ?? (done ? '—' : '')}</div>
@@ -110,7 +109,7 @@ function buildMatchCard(m, isOwner) {
         ${isOwner && m.status !== 'finalizado' && m.team1_reg_id && m.team2_reg_id ? `
           <div style="margin-top:10px;border-top:1px solid var(--gray-border);padding-top:10px">
             <button class="btn btn-outline btn-sm" style="width:100%" onclick="openMatchResultModal(${JSON.stringify(m).replace(/"/g,'&quot;')})">
-              📝 Registrar resultado
+              Registrar resultado
             </button>
           </div>` : ''}
       </div>
@@ -168,10 +167,10 @@ window.openMatchResultModal = function(match) {
             <div class="form-label">Vencedor</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">
               <button class="btn btn-outline" id="win-t1" onclick="selectWinner('t1', ${match.team1_reg_id}, ${match.team2_reg_id})">
-                🥇 ${match.team1_squad || match.team1_name || 'Time 1'}
+                ${match.team1_squad || match.team1_name || 'Time 1'}
               </button>
               <button class="btn btn-outline" id="win-t2" onclick="selectWinner('t2', ${match.team1_reg_id}, ${match.team2_reg_id})">
-                🥇 ${match.team2_squad || match.team2_name || 'Time 2'}
+                ${match.team2_squad || match.team2_name || 'Time 2'}
               </button>
             </div>
           </div>

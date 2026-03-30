@@ -6,7 +6,7 @@
 window.renderSearchPage = async function(el) {
   el.innerHTML = `
     <div style="background:var(--black);padding:16px 16px 0">
-      <h1 style="color:var(--white);font-size:1.6rem;margin-bottom:12px">🔍 Busca Avançada</h1>
+      <h1 style="color:var(--white);font-size:1.6rem;margin-bottom:12px">Busca Avançada</h1>
       <div style="background:rgba(255,255,255,.08);border-radius:var(--radius);padding:16px;margin-bottom:0">
         <div class="form-group" style="margin-bottom:10px">
           <input type="text" class="form-control" id="adv-q" placeholder="Nome do evento ou arena..." style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#fff">
@@ -26,11 +26,11 @@ window.renderSearchPage = async function(el) {
             <option value="pendente">Pendente</option>
           </select>
         </div>
-        <button class="btn btn-primary btn-block" onclick="runAdvancedSearch()">🔍 Buscar</button>
+        <button class="btn btn-primary btn-block" onclick="runAdvancedSearch()">Buscar</button>
       </div>
     </div>
     <div class="container" style="padding-top:16px" id="search-results">
-      <div class="empty-state"><div class="icon">🔍</div><p>Use os filtros acima para encontrar eventos.</p></div>
+      <div class="empty-state"><p>Use os filtros acima para encontrar eventos.</p></div>
     </div>`;
 };
 
@@ -52,14 +52,14 @@ window.runAdvancedSearch = async function() {
 
     const events = await apiFetch(`/events/search?${params}`);
     if (!events || events.length === 0) {
-      resultsEl.innerHTML = '<div class="empty-state"><div class="icon">🏖</div><p>Nenhum evento encontrado para esta busca.</p></div>';
+      resultsEl.innerHTML = '<div class="empty-state"><p>Nenhum evento encontrado para esta busca.</p></div>';
       return;
     }
     resultsEl.innerHTML = `
       <div style="font-size:.82rem;color:var(--text-muted);margin-bottom:12px;font-weight:600">${events.length} resultado(s) encontrado(s)</div>
       <div class="events-grid">${events.map(e => buildEventCard(e)).join('')}</div>`;
   } catch (err) {
-    resultsEl.innerHTML = `<div class="alert alert-error"><span class="alert-icon">⚠️</span>${err.message}</div>`;
+    resultsEl.innerHTML = `<div class="alert alert-error">${err.message}</div>`;
   }
 };
 
@@ -94,14 +94,14 @@ window.renderAthleteProfile = async function(el, athleteId) {
         <div class="card mb-12">
           <div class="card-body">
             <div style="font-size:.78rem;font-weight:700;color:var(--text-muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px">Contato</div>
-            ${athlete.phone ? `<div class="event-meta-row"><span class="icon">📞</span>${athlete.phone}</div>` : ''}
-            <div class="event-meta-row"><span class="icon">📧</span>${athlete.email}</div>
-            <div class="event-meta-row" style="margin-top:8px"><span class="icon">📅</span>Membro desde ${new Date(athlete.created_at).toLocaleDateString('pt-BR')}</div>
+            ${athlete.phone ? `<div class="event-meta-row"><span class="icon"></span>${athlete.phone}</div>` : ''}
+            <div class="event-meta-row"><span class="icon"></span>${athlete.email}</div>
+            <div class="event-meta-row" style="margin-top:8px"><span class="icon"></span>Membro desde ${new Date(athlete.created_at).toLocaleDateString('pt-BR')}</div>
           </div>
         </div>
       </div>`;
   } catch (err) {
-    el.innerHTML = `<div class="container" style="padding-top:20px"><div class="alert alert-error"><span class="alert-icon">⚠️</span>${err.message}</div></div>`;
+    el.innerHTML = `<div class="container" style="padding-top:20px"><div class="alert alert-error">${err.message}</div></div>`;
   }
 };
 
@@ -120,12 +120,12 @@ window.renderArenaDetail = async function(el, arenaId) {
     el.innerHTML = `
       <div style="background:linear-gradient(135deg,var(--green) 0%,var(--black) 100%);padding:24px 16px 20px;color:var(--white)">
         <button class="back-btn" onclick="navigate('#/arenas')" style="color:rgba(255,255,255,.7);margin-bottom:12px">← Arenas</button>
-        <div style="font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:6px">🏟 Arena</div>
+        <div style="font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:6px">Arena</div>
         <h1 style="font-size:1.8rem;margin-bottom:8px">${arena.name}</h1>
         <div style="display:flex;flex-direction:column;gap:4px;opacity:.85;font-size:.85rem">
-          <div>📍 ${arena.address}, ${arena.city} — ${arena.state}</div>
-          ${arena.phone ? `<div>📞 ${arena.phone}</div>` : ''}
-          ${arena.email ? `<div>📧 ${arena.email}</div>` : ''}
+          <div>${arena.address}, ${arena.city} — ${arena.state}</div>
+          ${arena.phone ? `<div>${arena.phone}</div>` : ''}
+          ${arena.email ? `<div>${arena.email}</div>` : ''}
         </div>
       </div>
       <div class="container" style="padding-top:16px">
@@ -139,7 +139,7 @@ window.renderArenaDetail = async function(el, arenaId) {
 
         <!-- Mapa placeholder com link para Google Maps -->
         <a href="https://maps.google.com/?q=${encodeURIComponent(arena.address + ', ' + arena.city + ', ' + arena.state)}" target="_blank" class="map-placeholder mb-12" style="display:flex;text-decoration:none;margin-bottom:16px">
-          <div class="map-icon">🗺</div>
+          <div class="map-icon">Mapa</div>
           <div class="map-text">Ver no Google Maps<br><span style="font-size:.75rem;color:var(--text-muted)">${arena.address}, ${arena.city}</span></div>
         </a>
 
@@ -148,11 +148,11 @@ window.renderArenaDetail = async function(el, arenaId) {
           <span style="font-size:.82rem;color:var(--text-muted)">${arenaEvents.length} evento(s)</span>
         </div>
         <div class="events-grid">
-          ${arenaEvents.map(e => buildEventCard(e)).join('') || '<div class="empty-state" style="grid-column:1/-1"><div class="icon">🏖</div><p>Nenhum evento cadastrado nesta arena.</p></div>'}
+          ${arenaEvents.map(e => buildEventCard(e)).join('') || '<div class="empty-state" style="grid-column:1/-1"><p>Nenhum evento cadastrado nesta arena.</p></div>'}
         </div>
       </div>`;
   } catch (err) {
-    el.innerHTML = `<div class="container" style="padding-top:20px"><div class="alert alert-error"><span class="alert-icon">⚠️</span>${err.message}</div></div>`;
+    el.innerHTML = `<div class="container" style="padding-top:20px"><div class="alert alert-error">${err.message}</div></div>`;
   }
 };
 
@@ -165,31 +165,31 @@ window.showOnboarding = function() {
   const html = `
     <div class="onboarding-overlay" id="onboarding">
       <div class="onboarding-logo">PLAY<span>GAME</span></div>
-      <div class="onboarding-tagline">🏖 Eventos esportivos de areia</div>
+      <div class="onboarding-tagline">Eventos esportivos de areia</div>
       <div class="onboarding-features">
         <div class="onboarding-feature">
-          <div class="feat-icon">🏐</div>
+          <div class="feat-icon">V</div>
           <div class="feat-text">
             <div class="feat-title">Vôlei, Futevôlei & Beach Tennis</div>
             <div>Todas as modalidades de areia em um só lugar</div>
           </div>
         </div>
         <div class="onboarding-feature">
-          <div class="feat-icon">📋</div>
+          <div class="feat-icon">I</div>
           <div class="feat-text">
             <div class="feat-title">Inscrição simplificada</div>
             <div>Cadastre sua dupla e envie comprovante direto pelo app</div>
           </div>
         </div>
         <div class="onboarding-feature">
-          <div class="feat-icon">🏆</div>
+          <div class="feat-icon">C</div>
           <div class="feat-text">
             <div class="feat-title">Chaveamento automático</div>
             <div>Geração de confrontos e acompanhamento em tempo real</div>
           </div>
         </div>
         <div class="onboarding-feature">
-          <div class="feat-icon">🔔</div>
+          <div class="feat-icon">N</div>
           <div class="feat-text">
             <div class="feat-title">Notificações em tempo real</div>
             <div>Receba alertas de inscrições, pagamentos e atualizações</div>
@@ -226,7 +226,7 @@ window.openRatingModal = function(eventId, eventTitle) {
     <div class="modal-overlay" id="rating-modal">
       <div class="modal">
         <div class="modal-header">
-          <h2>⭐ Avaliar evento</h2>
+          <h2>Avaliar evento</h2>
           <button class="modal-close" onclick="document.getElementById('rating-modal').remove()">✕</button>
         </div>
         <div class="modal-body">
@@ -234,7 +234,7 @@ window.openRatingModal = function(eventId, eventTitle) {
           <div style="text-align:center;margin-bottom:20px">
             <div style="font-size:.82rem;font-weight:700;color:var(--text-muted);margin-bottom:10px;letter-spacing:.05em;text-transform:uppercase">Sua avaliação geral</div>
             <div id="star-row" style="display:flex;justify-content:center;gap:8px;font-size:2rem;cursor:pointer">
-              ${[1,2,3,4,5].map(i=>`<span class="star" data-val="${i}" onclick="setRating(${i})" style="opacity:.3;transition:all .2s">⭐</span>`).join('')}
+              ${[1,2,3,4,5].map(i=>`<span class="star" data-val="${i}" onclick="setRating(${i})" style="opacity:.3;transition:all .2s">★</span>`).join('')}
             </div>
             <div id="rating-label" style="font-size:.82rem;color:var(--text-muted);margin-top:6px;min-height:18px"></div>
             <input type="hidden" id="rating-val" value="0">
@@ -244,7 +244,7 @@ window.openRatingModal = function(eventId, eventTitle) {
               <div style="background:var(--gray-light);border-radius:var(--radius-sm);padding:10px;text-align:center">
                 <div style="font-size:.72rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px">${label}</div>
                 <div style="display:flex;justify-content:center;gap:4px">
-                  ${[1,2,3,4,5].map(i=>`<span class="mini-star" data-cat="${key}" data-val="${i}" onclick="setMiniRating('${key}',${i})" style="cursor:pointer;font-size:1rem;opacity:.3">⭐</span>`).join('')}
+                  ${[1,2,3,4,5].map(i=>`<span class="mini-star" data-cat="${key}" data-val="${i}" onclick="setMiniRating('${key}',${i})" style="cursor:pointer;font-size:1rem;opacity:.3">★</span>`).join('')}
                 </div>
               </div>`).join('')}
           </div>
@@ -255,7 +255,7 @@ window.openRatingModal = function(eventId, eventTitle) {
         </div>
         <div class="modal-footer">
           <button class="btn btn-outline" onclick="document.getElementById('rating-modal').remove()">Cancelar</button>
-          <button class="btn btn-primary" onclick="submitRating(${eventId})">Enviar avaliação ⭐</button>
+          <button class="btn btn-primary" onclick="submitRating(${eventId})">Enviar avaliação</button>
         </div>
       </div>
     </div>`;
@@ -283,7 +283,7 @@ window.submitRating = function(eventId) {
   ratings[eventId] = { rating: val, comment: document.getElementById('rating-comment').value, date: new Date().toISOString() };
   localStorage.setItem('pg_ratings', JSON.stringify(ratings));
   document.getElementById('rating-modal').remove();
-  toast('Avaliação enviada! Obrigado! ⭐', 'success');
+  toast('Avaliação enviada! Obrigado!', 'success');
 };
 
 // ════════════════════════════════════════════
@@ -295,13 +295,13 @@ window.buildShareWidget = function(ev) {
   return `
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">
       <button class="share-btn" onclick="shareEvent('${ev.title.replace(/'/g,"\\'")}', ${ev.id})">
-        <span>📤</span> Compartilhar
+        Compartilhar
       </button>
       <button class="share-btn" onclick="copyEventLink(${ev.id})">
-        <span>🔗</span> Copiar link
+        Copiar link
       </button>
       <a class="share-btn" href="https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}" target="_blank">
-        <span>💬</span> WhatsApp
+        WhatsApp
       </a>
     </div>`;
 };
@@ -331,7 +331,7 @@ window.renderEventSettings = async function(el, eventId) {
     el.innerHTML = `
       <div style="background:var(--black);padding:16px 16px 12px">
         <button class="back-btn" onclick="navigate('#/eventos/${eventId}')" style="color:rgba(255,255,255,.7);margin-bottom:8px">← Voltar ao evento</button>
-        <h1 style="color:var(--white);font-size:1.6rem">⚙️ Config. do Evento</h1>
+        <h1 style="color:var(--white);font-size:1.6rem">Config. do Evento</h1>
         <div style="color:rgba(255,255,255,.5);font-size:.82rem;margin-top:2px">${ev.title}</div>
       </div>
       <div class="container" style="padding-top:16px">
@@ -339,9 +339,9 @@ window.renderEventSettings = async function(el, eventId) {
         <!-- Chave PIX -->
         <div class="card mb-12">
           <div class="card-body">
-            <div style="font-size:.78rem;font-weight:700;color:var(--text-muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px">💰 Dados para Pagamento</div>
+            <div style="font-size:.78rem;font-weight:700;color:var(--text-muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px">Dados para Pagamento</div>
             <div class="pix-box">
-              <div class="pix-icon">⚡</div>
+              <div class="pix-icon">PIX</div>
               <div class="pix-title">PIX</div>
               <div class="pix-sub">Adicione sua chave para facilitar o pagamento dos atletas</div>
               <div class="pix-key" id="pix-display">${localStorage.getItem(`pg_pix_${eventId}`) || 'Clique para adicionar'}</div>
@@ -357,11 +357,11 @@ window.renderEventSettings = async function(el, eventId) {
         <!-- Status do evento -->
         <div class="card mb-12">
           <div class="card-body">
-            <div style="font-size:.78rem;font-weight:700;color:var(--text-muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px">📋 Status do Evento</div>
+            <div style="font-size:.78rem;font-weight:700;color:var(--text-muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px">Status do Evento</div>
             <div style="display:flex;flex-direction:column;gap:8px">
               ${['confirmado','pendente','encerrado','cancelado'].map(s => `
                 <button class="btn ${ev.status===s?'btn-primary':'btn-outline'} btn-sm" onclick="quickChangeStatus(${eventId},'${s}')">
-                  ${s==='confirmado'?'✅':s==='pendente'?'⏳':s==='encerrado'?'🏁':'❌'} ${s.charAt(0).toUpperCase()+s.slice(1)}
+                  ${s.charAt(0).toUpperCase()+s.slice(1)}
                 </button>`).join('')}
             </div>
           </div>
@@ -370,13 +370,13 @@ window.renderEventSettings = async function(el, eventId) {
         <!-- Zona de perigo -->
         <div class="card" style="border-color:#fca5a5">
           <div class="card-body">
-            <div style="font-size:.78rem;font-weight:700;color:var(--red);letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px">⚠️ Zona de Perigo</div>
-            <button class="btn btn-danger btn-block" onclick="deleteEvent(${eventId})">🗑 Excluir evento permanentemente</button>
+            <div style="font-size:.78rem;font-weight:700;color:var(--red);letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px">Zona de Perigo</div>
+            <button class="btn btn-danger btn-block" onclick="deleteEvent(${eventId})">Excluir evento permanentemente</button>
           </div>
         </div>
       </div>`;
   } catch (err) {
-    el.innerHTML = `<div class="container" style="padding-top:20px"><div class="alert alert-error"><span class="alert-icon">⚠️</span>${err.message}</div></div>`;
+    el.innerHTML = `<div class="container" style="padding-top:20px"><div class="alert alert-error">${err.message}</div></div>`;
   }
 };
 
@@ -414,10 +414,10 @@ window.buildEventDetailHTML = function(ev, user, isOwner, myReg) {
   const pixKey = localStorage.getItem(`pg_pix_${ev.id}`);
   const pixBox = pixKey && myReg && myReg.payment_status !== 'pago' ? `
     <div class="pix-box" style="margin-top:16px">
-      <div class="pix-icon">⚡</div>
+      <div class="pix-icon">PIX</div>
       <div class="pix-title">Pague via PIX</div>
       <div class="pix-sub">Envie para a chave abaixo e depois envie o comprovante</div>
-      <div class="pix-key" onclick="copyPix('${pixKey}')" style="cursor:pointer" title="Clique para copiar">${pixKey} 📋</div>
+      <div class="pix-key" onclick="copyPix('${pixKey}')" style="cursor:pointer" title="Clique para copiar">${pixKey}</div>
     </div>` : '';
 
   // Injetar share widget
@@ -431,17 +431,17 @@ window.buildEventDetailHTML = function(ev, user, isOwner, myReg) {
   const ratingBtn = eventPassed && myReg ? `
     <div style="margin-top:12px">
       <button class="btn btn-outline btn-sm btn-block" onclick="openRatingModal(${ev.id}, '${ev.title.replace(/'/g,"\\'")}')">
-        ⭐ Avaliar este evento
+        Avaliar este evento
       </button>
     </div>` : '';
 
   // Organizer quick links
   const orgLinks = isOwner ? `
     <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
-      <a href="#/pagamentos-evento/${ev.id}" class="btn btn-outline btn-sm">💰 Pagamentos</a>
-      <a href="#/chaveamento/${ev.id}" class="btn btn-outline btn-sm">🏆 Chaveamento</a>
-      <a href="#/relatorio/${ev.id}" class="btn btn-outline btn-sm">📊 Relatório</a>
-      <a href="#/config-evento/${ev.id}" class="btn btn-outline btn-sm">⚙️ Configurações</a>
+      <a href="#/pagamentos-evento/${ev.id}" class="btn btn-outline btn-sm">Pagamentos</a>
+      <a href="#/chaveamento/${ev.id}" class="btn btn-outline btn-sm">Chaveamento</a>
+      <a href="#/relatorio/${ev.id}" class="btn btn-outline btn-sm">Relatório</a>
+      <a href="#/config-evento/${ev.id}" class="btn btn-outline btn-sm">Configurações</a>
     </div>` : '';
 
   // Injetar tudo antes do fechamento da última div
@@ -458,4 +458,4 @@ window.copyPix = async function(key) {
   } catch { toast('Chave: ' + key, 'info'); }
 };
 
-console.log('🏖 PlayGAME Extra Pages loaded');
+console.log('PlayGAME Extra Pages loaded');
