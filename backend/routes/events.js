@@ -2,6 +2,8 @@
 const express = require('express');
 const { pool } = require('../config/database');
 const { authMiddleware, requireRole } = require('../middleware/auth');
+const { auditLog } = require('../middleware/audit');
+const { createEventRules, updateEventRules, commentRules, pixKeyRules, intId, handleValidation } = require('../middleware/validate');
 const router = express.Router();
 
 const MODALITY_LABELS = {
@@ -100,11 +102,8 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/events — criar evento (organizador)
-router.post('/', authMiddleware, requireRole('organizador'), async (req, res) => {
+router.post('/', authMiddleware, requireRole('organizador'), createEventRules, async (req, res) => {
   const { arena_id, title, modality, event_date, start_time, end_time, registration_fee, participant_limit, rules, description } = req.body;
-  if (!arena_id || !title || !modality || !event_date || !start_time) {
-    return res.status(400).json({ error: 'Campos obrigatórios faltando.' });
-  }
 
   try {
     const { rows: [{ id }] } = await pool.query(
@@ -112,6 +111,7 @@ router.post('/', authMiddleware, requireRole('organizador'), async (req, res) =>
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`,
       [req.user.id, arena_id, title, modality, event_date, start_time, end_time || null, registration_fee || 0, participant_limit || 16, rules || '', description || '']
     );
+    auditLog('event.create', req.user.id, { event_id: id, title }, req);
     res.status(201).json({ message: 'Evento criado com sucesso!', id });
   } catch (err) {
     console.error(err);
@@ -120,7 +120,7 @@ router.post('/', authMiddleware, requireRole('organizador'), async (req, res) =>
 });
 
 // PUT /api/events/:id — editar evento (organizador dono)
-router.put('/:id', authMiddleware, requireRole('organizador'), async (req, res) => {
+router.put('/:id', authMiddleware, requireRole('organizador'), updateEventRules, async (req, res) => {
   const { title, modality, event_date, start_time, end_time, registration_fee, participant_limit, rules, description, status } = req.body;
   try {
     const { rows } = await pool.query('SELECT * FROM events WHERE id = $1 AND organizer_id = $2', [req.params.id, req.user.id]);
@@ -138,9 +138,8 @@ router.put('/:id', authMiddleware, requireRole('organizador'), async (req, res) 
 });
 
 // PUT /api/events/:id/pix — salvar chave PIX do evento (organizador dono)
-router.put('/:id/pix', authMiddleware, requireRole('organizador'), async (req, res) => {
+router.put('/:id/pix', authMiddleware, requireRole('organizador'), pixKeyRules, async (req, res) => {
   const { pix_key } = req.body;
-  if (!pix_key) return res.status(400).json({ error: 'Chave PIX obrigatória.' });
   try {
     const { rowCount } = await pool.query(
       'UPDATE events SET pix_key=$1 WHERE id=$2 AND organizer_id=$3',
@@ -161,6 +160,7 @@ router.delete('/:id', authMiddleware, requireRole('organizador'), async (req, re
     if (rows.length === 0) return res.status(404).json({ error: 'Evento não encontrado ou sem permissão.' });
 
     await pool.query('DELETE FROM events WHERE id = $1', [req.params.id]);
+    auditLog('event.delete', req.user.id, { event_id: req.params.id, title: rows[0].title }, req);
     res.json({ message: 'Evento excluído com sucesso!' });
   } catch (err) {
     console.error(err);
@@ -194,9 +194,8 @@ router.put('/:id/confirm-arena', authMiddleware, requireRole('organizador'), asy
 });
 
 // POST /api/events/:id/comment — comentar no evento
-router.post('/:id/comment', authMiddleware, async (req, res) => {
+router.post('/:id/comment', authMiddleware, commentRules, async (req, res) => {
   const { message } = req.body;
-  if (!message) return res.status(400).json({ error: 'Mensagem obrigatória.' });
 
   try {
     const { rows: [{ id }] } = await pool.query(

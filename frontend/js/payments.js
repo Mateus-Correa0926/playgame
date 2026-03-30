@@ -23,7 +23,7 @@ window.renderPaymentsPage = async function(el, eventId) {
         <div style="display:flex;justify-content:space-between;align-items:flex-end">
           <div>
             <h1 style="color:var(--white);font-size:1.6rem;margin-bottom:2px">Pagamentos</h1>
-            <div style="color:rgba(255,255,255,.5);font-size:.82rem">${eventData?.title || ''}</div>
+            <div style="color:rgba(255,255,255,.5);font-size:.82rem">${esc(eventData?.title || '')}</div>
           </div>
         </div>
       </div>
@@ -73,13 +73,13 @@ function buildPaymentCard(p, type, fee) {
       <div class="card-body" style="padding:14px 16px">
         <div style="display:flex;align-items:center;gap:12px">
           <div class="athlete-avatar" style="background:${type==='paid'?'var(--green)':type==='pending'?'var(--orange)':'var(--gray-border)'}">
-            ${p.athlete_avatar ? `<img src="${p.athlete_avatar}" alt="">` : avatarInitials(p.athlete_name)}
+            ${p.athlete_avatar ? `<img src="${esc(p.athlete_avatar)}" alt="">` : avatarInitials(p.athlete_name)}
           </div>
           <div style="flex:1;min-width:0">
-            <div style="font-weight:700;font-size:.95rem">${p.athlete_name}</div>
-            <div style="font-size:.78rem;color:var(--text-muted)">${p.team_name || p.partner_name || 'Individual'}</div>
+            <div style="font-weight:700;font-size:.95rem">${esc(p.athlete_name)}</div>
+            <div style="font-size:.78rem;color:var(--text-muted)">${esc(p.team_name || p.partner_name || 'Individual')}</div>
             <div style="font-size:.75rem;color:var(--text-muted);margin-top:2px">
-              ${p.athlete_email} ${p.athlete_phone ? '· ' + p.athlete_phone : ''}
+              ${esc(p.athlete_email)} ${p.athlete_phone ? '· ' + esc(p.athlete_phone) : ''}
             </div>
           </div>
           <div style="text-align:right;flex-shrink:0">
@@ -91,7 +91,7 @@ function buildPaymentCard(p, type, fee) {
         ${hasProof ? `
           <div style="margin-top:10px;padding:8px 10px;background:var(--gray-light);border-radius:var(--radius-sm);display:flex;align-items:center;gap:8px">
             <span style="font-size:1rem"></span>
-            <a href="${p.payment_proof}" target="_blank" style="flex:1;font-size:.82rem;color:var(--orange);font-weight:600;text-decoration:none">Ver comprovante</a>
+            <a href="${esc(p.payment_proof)}" target="_blank" style="flex:1;font-size:.82rem;color:var(--orange);font-weight:600;text-decoration:none">Ver comprovante</a>
           </div>` : ''}
 
         ${type === 'pending' ? `

@@ -2,12 +2,12 @@
 const express = require('express');
 const { pool } = require('../config/database');
 const { authMiddleware, requireRole } = require('../middleware/auth');
+const { registrationRules } = require('../middleware/validate');
 const router = express.Router();
 
 // POST /api/registrations — atleta se inscreve (auto-fill from profile)
-router.post('/', authMiddleware, requireRole('atleta'), async (req, res) => {
+router.post('/', authMiddleware, requireRole('atleta'), registrationRules, async (req, res) => {
   const { event_id, partner_name, partner_email, partner_phone, team_name, notes } = req.body;
-  if (!event_id) return res.status(400).json({ error: 'ID do evento obrigatório.' });
 
   try {
     // Check profile completeness

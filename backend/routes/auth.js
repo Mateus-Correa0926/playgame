@@ -3,6 +3,8 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { pool } = require('../config/database');
+const { auditLog } = require('../middleware/audit');
+const { registerRules, loginRules } = require('../middleware/validate');
 const router = express.Router();
 
 const COOKIE_OPTS = {
@@ -14,15 +16,8 @@ const COOKIE_OPTS = {
 };
 
 // POST /api/auth/register
-router.post('/register', async (req, res) => {
+router.post('/register', registerRules, async (req, res) => {
   const { name, email, password, phone, role } = req.body;
-
-  if (!name || !email || !password || !role) {
-    return res.status(400).json({ error: 'Campos obrigatórios: nome, email, senha, perfil.' });
-  }
-  if (!['organizador', 'atleta'].includes(role)) {
-    return res.status(400).json({ error: 'Perfil inválido.' });
-  }
 
   try {
     const { rows: exists } = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
@@ -43,6 +38,7 @@ router.post('/register', async (req, res) => {
     );
 
     res.cookie('pg_token', token, COOKIE_OPTS);
+    auditLog('auth.register', userId, { email, role }, req);
     res.status(201).json({ message: 'Cadastro realizado com sucesso!', user: { id: userId, name, email, role } });
   } catch (err) {
     console.error(err);
@@ -51,22 +47,20 @@ router.post('/register', async (req, res) => {
 });
 
 // POST /api/auth/login
-router.post('/login', async (req, res) => {
+router.post('/login', loginRules, async (req, res) => {
   const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({ error: 'E-mail e senha são obrigatórios.' });
-  }
 
   try {
     const { rows } = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     if (rows.length === 0) {
+      auditLog('auth.login_failed', null, { email, reason: 'not_found' }, req);
       return res.status(401).json({ error: 'E-mail ou senha incorretos.' });
     }
 
     const user = rows[0];
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) {
+      auditLog('auth.login_failed', user.id, { email, reason: 'wrong_password' }, req);
       return res.status(401).json({ error: 'E-mail ou senha incorretos.' });
     }
 
@@ -77,6 +71,7 @@ router.post('/login', async (req, res) => {
     );
 
     res.cookie('pg_token', token, COOKIE_OPTS);
+    auditLog('auth.login', user.id, { email }, req);
     res.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role, avatar: user.avatar } });
   } catch (err) {
     console.error(err);

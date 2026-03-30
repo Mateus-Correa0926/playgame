@@ -79,10 +79,10 @@ window.renderAthleteProfile = async function(el, athleteId) {
         <button class="back-btn" onclick="history.back()" style="color:rgba(255,255,255,.7);margin-bottom:12px">← Voltar</button>
         <div class="profile-avatar-wrap">
           <div class="profile-avatar">
-            ${athlete.avatar ? `<img src="${athlete.avatar}">` : avatarInitials(athlete.name)}
+            ${athlete.avatar ? `<img src="${esc(athlete.avatar)}">` : avatarInitials(athlete.name)}
           </div>
         </div>
-        <div class="profile-name">${athlete.name}</div>
+        <div class="profile-name">${esc(athlete.name)}</div>
         <span class="profile-role-badge">Atleta</span>
       </div>
       <div class="profile-stats">
@@ -94,8 +94,8 @@ window.renderAthleteProfile = async function(el, athleteId) {
         <div class="card mb-12">
           <div class="card-body">
             <div style="font-size:.78rem;font-weight:700;color:var(--text-muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px">Contato</div>
-            ${athlete.phone ? `<div class="event-meta-row"><span class="icon"></span>${athlete.phone}</div>` : ''}
-            <div class="event-meta-row"><span class="icon"></span>${athlete.email}</div>
+            ${athlete.phone ? `<div class="event-meta-row"><span class="icon"></span>${esc(athlete.phone)}</div>` : ''}
+            <div class="event-meta-row"><span class="icon"></span>${esc(athlete.email)}</div>
             <div class="event-meta-row" style="margin-top:8px"><span class="icon"></span>Membro desde ${new Date(athlete.created_at).toLocaleDateString('pt-BR')}</div>
           </div>
         </div>
@@ -121,11 +121,11 @@ window.renderArenaDetail = async function(el, arenaId) {
       <div style="background:linear-gradient(135deg,var(--green) 0%,var(--black) 100%);padding:24px 16px 20px;color:var(--white)">
         <button class="back-btn" onclick="navigate('#/arenas')" style="color:rgba(255,255,255,.7);margin-bottom:12px">← Arenas</button>
         <div style="font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:6px">Arena</div>
-        <h1 style="font-size:1.8rem;margin-bottom:8px">${arena.name}</h1>
+        <h1 style="font-size:1.8rem;margin-bottom:8px">${esc(arena.name)}</h1>
         <div style="display:flex;flex-direction:column;gap:4px;opacity:.85;font-size:.85rem">
-          <div>${arena.address}, ${arena.city} — ${arena.state}</div>
-          ${arena.phone ? `<div>${arena.phone}</div>` : ''}
-          ${arena.email ? `<div>${arena.email}</div>` : ''}
+          <div>${esc(arena.address)}, ${esc(arena.city)} — ${esc(arena.state)}</div>
+          ${arena.phone ? `<div>${esc(arena.phone)}</div>` : ''}
+          ${arena.email ? `<div>${esc(arena.email)}</div>` : ''}
         </div>
       </div>
       <div class="container" style="padding-top:16px">
@@ -133,14 +133,14 @@ window.renderArenaDetail = async function(el, arenaId) {
           <div class="card mb-12">
             <div class="card-body">
               <div style="font-size:.78rem;font-weight:700;color:var(--text-muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px">Sobre a arena</div>
-              <p style="font-size:.9rem;color:var(--text-secondary)">${arena.description}</p>
+              <p style="font-size:.9rem;color:var(--text-secondary)">${esc(arena.description)}</p>
             </div>
           </div>` : ''}
 
         <!-- Mapa placeholder com link para Google Maps -->
         <a href="https://maps.google.com/?q=${encodeURIComponent(arena.address + ', ' + arena.city + ', ' + arena.state)}" target="_blank" class="map-placeholder mb-12" style="display:flex;text-decoration:none;margin-bottom:16px">
           <div class="map-icon">Mapa</div>
-          <div class="map-text">Ver no Google Maps<br><span style="font-size:.75rem;color:var(--text-muted)">${arena.address}, ${arena.city}</span></div>
+          <div class="map-text">Ver no Google Maps<br><span style="font-size:.75rem;color:var(--text-muted)">${esc(arena.address)}, ${esc(arena.city)}</span></div>
         </a>
 
         <div class="section-header mb-12">

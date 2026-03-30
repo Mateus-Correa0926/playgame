@@ -5,6 +5,7 @@ const multer = require('multer');
 const path = require('path');
 const { pool } = require('../config/database');
 const { authMiddleware } = require('../middleware/auth');
+const { updateProfileRules, changePasswordRules } = require('../middleware/validate');
 const router = express.Router();
 
 const storage = multer.diskStorage({
@@ -32,7 +33,7 @@ router.get('/me', authMiddleware, async (req, res) => {
 });
 
 // PUT /api/users/me
-router.put('/me', authMiddleware, async (req, res) => {
+router.put('/me', authMiddleware, updateProfileRules, async (req, res) => {
   const { name, phone, bio, cpf, birth_date, gender, city, state, shirt_size } = req.body;
   try {
     await pool.query(
@@ -46,7 +47,7 @@ router.put('/me', authMiddleware, async (req, res) => {
 });
 
 // PUT /api/users/me/password
-router.put('/me/password', authMiddleware, async (req, res) => {
+router.put('/me/password', authMiddleware, changePasswordRules, async (req, res) => {
   const { current_password, new_password } = req.body;
   try {
     const { rows } = await pool.query('SELECT password FROM users WHERE id=$1', [req.user.id]);

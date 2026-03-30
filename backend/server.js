@@ -1,8 +1,10 @@
-// backend/server.js — PlayGAME Main Server v1.2
+// backend/server.js — PlayGAME Main Server v1.3
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const jwt = require('jsonwebtoken');
 const path = require('path');
 const http = require('http');
@@ -20,11 +22,51 @@ const io = new Server(server, {
   cors: { origin: allowedOrigins, methods: ['GET', 'POST', 'PUT', 'DELETE'], credentials: true }
 });
 
+// ── SECURITY HEADERS (helmet + CSP) ──
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https://images.unsplash.com", "https://*.unsplash.com"],
+      connectSrc: ["'self'", ...allowedOrigins, "ws:", "wss:"],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      frameAncestors: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"]
+    }
+  },
+  crossOriginEmbedderPolicy: false, // needed for external images
+  hsts: { maxAge: 31536000, includeSubDomains: true, preload: true }
+}));
+
+// ── RATE LIMITING ──
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,  // 15 min
+  max: 300,                    // 300 requests per window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Muitas requisições. Tente novamente em alguns minutos.' }
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,                     // 10 login/register attempts per 15 min
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+  message: { error: 'Muitas tentativas. Aguarde 15 minutos.' }
+});
+
 app.set('io', io);
+app.set('trust proxy', 1);
+app.use(globalLimiter);
 app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(cookieParser());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 // ── UPLOADS — arquivos públicos (avatares/banners) vs protegidos (comprovantes) ──
 app.use('/uploads', (req, res, next) => {
@@ -41,7 +83,7 @@ app.use('/uploads', (req, res, next) => {
 app.use(express.static(path.join(__dirname, '../frontend')));
 
 // ── ROTAS DA API ──
-app.use('/api/auth',          require('./routes/auth'));
+app.use('/api/auth',          authLimiter, require('./routes/auth'));
 app.use('/api/events',        require('./routes/events-extended'));
 app.use('/api/events',        require('./routes/events'));
 app.use('/api/registrations', require('./routes/registrations'));
@@ -54,7 +96,7 @@ app.use('/api/brackets',      require('./routes/brackets'));
 app.use('/api/admin',         require('./routes/admin'));
 
 app.get('/api/health', (req, res) => res.json({
-  status: 'ok', app: 'PlayGAME', version: '1.1.0',
+  status: 'ok', app: 'PlayGAME', version: '1.3.0',
   uptime: Math.floor(process.uptime()) + 's'
 }));
 
@@ -114,7 +156,7 @@ async function start() {
   await testConnection();
   server.listen(PORT, () => {
     console.log(`\n╔══════════════════════════════╗`);
-    console.log(`║  PlayGAME Server v1.2       ║`);
+    console.log(`║  PlayGAME Server v1.3       ║`);
     console.log(`╚══════════════════════════════╝`);
     console.log(`📡 API:      http://localhost:${PORT}/api`);
     console.log(`🌐 App:      http://localhost:${PORT}\n`);
