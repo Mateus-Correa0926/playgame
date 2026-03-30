@@ -1,0 +1,245 @@
+/* PlayGAME — Animations & Final Polish (animations.css) */
+
+/* ── PAGE TRANSITIONS ── */
+#page-content {
+  animation: pageIn .18s ease;
+}
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── CARD HOVER EFFECTS ── */
+.card {
+  transition: box-shadow .2s ease, transform .2s ease, border-color .2s ease;
+}
+.event-card:active {
+  transform: scale(.98);
+}
+
+/* ── BUTTON PRESS ── */
+.btn:active:not(:disabled) {
+  transform: scale(.97);
+}
+
+/* ── ATHLETE ITEM HOVER ── */
+.athlete-item {
+  transition: background .15s ease;
+}
+.athlete-item:hover {
+  background: var(--gray-light);
+}
+
+/* ── STAGGER ANIMATION for grids ── */
+.events-grid .event-card {
+  animation: cardIn .25s ease both;
+}
+.events-grid .event-card:nth-child(1) { animation-delay: 0s; }
+.events-grid .event-card:nth-child(2) { animation-delay: .05s; }
+.events-grid .event-card:nth-child(3) { animation-delay: .1s; }
+.events-grid .event-card:nth-child(4) { animation-delay: .15s; }
+.events-grid .event-card:nth-child(5) { animation-delay: .2s; }
+.events-grid .event-card:nth-child(6) { animation-delay: .25s; }
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── STAT COUNTER ANIMATION ── */
+.stat-value {
+  animation: countIn .4s ease;
+}
+@keyframes countIn {
+  from { opacity: 0; transform: scale(.8); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ── TOAST ANIMATION EXIT ── */
+.toast {
+  animation: toastIn .3s ease, toastOut .3s ease 2.7s forwards;
+}
+@keyframes toastOut {
+  to { opacity: 0; transform: translateX(-50%) translateY(8px); }
+}
+
+/* ── BOTTOM NAV INDICATOR ── */
+.bottom-nav-item {
+  position: relative;
+  transition: color .2s ease;
+}
+.bottom-nav-item.active::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 20px; height: 2px;
+  background: var(--orange);
+  border-radius: 0 0 4px 4px;
+  animation: slideDown .2s ease;
+}
+@keyframes slideDown {
+  from { width: 0; }
+  to   { width: 20px; }
+}
+
+/* ── NOTIF BADGE PULSE ── */
+.notif-badge {
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(232,119,34,.4); }
+  50%       { box-shadow: 0 0 0 4px rgba(232,119,34,0); }
+}
+
+/* ── SPINNER REFINEMENT ── */
+.spinner {
+  border-width: 2px;
+}
+
+/* ── PROFILE AVATAR HOVER ── */
+.profile-avatar {
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.profile-avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 20px rgba(232,119,34,.35);
+}
+
+/* ── EVENT BANNER GRADIENT OVERLAY ── */
+.event-card-banner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,.5) 100%);
+}
+
+/* ── MODALITY CHIP ACTIVE EFFECT ── */
+.modality-chip.active {
+  animation: chipPop .2s ease;
+}
+@keyframes chipPop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+/* ── FOCUS RING ACCESSIBILITY ── */
+:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+
+/* ── SMOOTH SCROLL ── */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ── PLACEHOLDER SHIMMER ── */
+.skeleton {
+  animation: shimmer 1.4s ease-in-out infinite;
+  background: linear-gradient(90deg,
+    var(--gray-border) 0%,
+    #ececea 40%,
+    var(--gray-border) 80%
+  );
+  background-size: 300% 100%;
+}
+@keyframes shimmer {
+  0%   { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* ── HAPTIC-LIKE FEEDBACK (visual) ── */
+@keyframes tapFeedback {
+  0%   { background: var(--orange-xlight); }
+  100% { background: transparent; }
+}
+
+/* ── HEADER SCROLL SHADOW ── */
+.navbar {
+  transition: box-shadow .2s ease;
+}
+.navbar.scrolled {
+  box-shadow: 0 2px 16px rgba(0,0,0,.3);
+}
+
+/* ── FORM VALIDATION COLORS ── */
+.form-control.invalid {
+  border-color: var(--red);
+  box-shadow: 0 0 0 3px rgba(192,57,43,.12);
+}
+.form-control.valid {
+  border-color: var(--green);
+}
+
+/* ── PROGRESS BAR ANIMATION ── */
+.progress-bar {
+  animation: growBar .6s ease;
+}
+@keyframes growBar {
+  from { width: 0 !important; }
+}
+
+/* ── ONBOARDING FEATURE STAGGER ── */
+.onboarding-feature {
+  animation: featureIn .4s ease both;
+}
+.onboarding-feature:nth-child(1) { animation-delay: .1s; }
+.onboarding-feature:nth-child(2) { animation-delay: .2s; }
+.onboarding-feature:nth-child(3) { animation-delay: .3s; }
+.onboarding-feature:nth-child(4) { animation-delay: .4s; }
+@keyframes featureIn {
+  from { opacity: 0; transform: translateX(-16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ── MATCH CARD WIN STATE ── */
+.match-winner {
+  animation: winGlow .6s ease;
+}
+@keyframes winGlow {
+  0%   { box-shadow: 0 0 0 0 rgba(74,92,58,.5); }
+  50%  { box-shadow: 0 0 0 8px rgba(74,92,58,0); }
+  100% { box-shadow: 0 0 0 0 rgba(74,92,58,0); }
+}
+
+/* ── RESPONSIVE TYPOGRAPHY SCALE ── */
+@media (min-width: 768px) {
+  .hero-name { font-size: 2.5rem; }
+  .event-detail-title { font-size: 2.2rem; }
+  .stat-value { font-size: 2.2rem; }
+}
+
+/* ── SAFE AREA FIX (iPhone notch) ── */
+.navbar { padding-top: env(safe-area-inset-top, 0); }
+.auth-page { padding-top: max(24px, env(safe-area-inset-top, 24px)); }
+
+/* ── SCROLLED NAVBAR ── */
+window.addEventListener?.('scroll', () => {
+  const nav = document.querySelector('.navbar');
+  if (nav) nav.classList.toggle('scrolled', window.scrollY > 10);
+});
+
+/* ── MODAL OVERLAY CLICK-OUTSIDE CLOSE ── */
+document.addEventListener?.('click', (e) => {
+  if (e.target.classList.contains('modal-overlay')) {
+    e.target.remove();
+  }
+});
+
+/* ── PREVENT DOUBLE-TAP ZOOM ── */
+* { touch-action: manipulation; }
+
+/* ── HIGH CONTRAST / ACCESSIBILITY ── */
+@media (prefers-contrast: high) {
+  .btn-primary { background: #000; color: #fff; }
+  .status-pill { border: 2px solid currentColor; }
+}
+
+/* ── REDUCE MOTION ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}
