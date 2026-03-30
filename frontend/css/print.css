@@ -1,0 +1,40 @@
+/* PlayGAME — Print Styles (print.css) */
+@media print {
+  .navbar, .bottom-nav, .back-btn, .btn, .fab,
+  .modal-overlay, #notif-panel, .search-bar { display: none !important; }
+
+  body { background: white; color: black; font-size: 12pt; }
+
+  .main-content { padding: 0; }
+
+  .card {
+    border: 1px solid #ccc; box-shadow: none;
+    break-inside: avoid; margin-bottom: 12pt;
+  }
+
+  .stats-row { display: flex; gap: 8pt; }
+  .stat-card { border: 1px solid #ccc; padding: 8pt; flex: 1; }
+  .stat-value { font-size: 18pt; font-weight: bold; }
+
+  .athlete-item { border: 1px solid #eee; padding: 6pt; margin-bottom: 4pt; }
+
+  h1, h2, h3 { color: black; }
+
+  a { color: black; text-decoration: none; }
+
+  .status-pill { border: 1px solid #ccc; padding: 2pt 6pt; border-radius: 4pt; }
+
+  /* Forçar quebra de página antes de seções */
+  .bracket-round { break-before: auto; }
+
+  /* Header de impressão */
+  body::before {
+    content: 'PlayGAME — Relatório de Evento';
+    display: block;
+    font-size: 16pt;
+    font-weight: bold;
+    margin-bottom: 12pt;
+    border-bottom: 2pt solid black;
+    padding-bottom: 6pt;
+  }
+}

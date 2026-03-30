@@ -1,0 +1,16 @@
+{
+  "name": "PlayGAME — Eventos de Areia",
+  "short_name": "PlayGAME",
+  "description": "Gerenciamento de eventos esportivos de areia — Vôlei, Futevôlei, Beach Tennis",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#e87722",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/img/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/img/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ],
+  "categories": ["sports", "social"],
+  "lang": "pt-BR"
+}
