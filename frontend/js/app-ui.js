@@ -45,17 +45,7 @@ window.renderHome = async function(el) {
               <option value="200+">Acima de R$ 200</option>
             </select>
           </div>
-          <div class="filter-row" style="margin-top:10px">
-            <div class="date-filter-group">
-              <label class="date-filter-label">De</label>
-              <input type="date" class="form-control form-control-sm" id="filter-date-start" onchange="applyAdvancedFilters()">
-            </div>
-            <div class="date-filter-group">
-              <label class="date-filter-label">Até</label>
-              <input type="date" class="form-control form-control-sm" id="filter-date-end" onchange="applyAdvancedFilters()">
-            </div>
-            <button class="btn btn-ghost btn-sm" onclick="clearDateFilters()" style="align-self:flex-end">Limpar datas</button>
-          </div>
+          <div id="pg-calendar-wrap"></div>
         </div>
       </div>
       <div class="events-grid" id="events-grid">
@@ -70,6 +60,7 @@ window.renderHome = async function(el) {
     // Store events data for advanced filtering
     window._homeEvents = events;
     bindFilters();
+    initCalendarWidget();
   } catch (err) {
     el.innerHTML = `<div class="empty-state"><p>${err.message}</p></div>`;
   }
@@ -119,14 +110,118 @@ window.renderDashboard = async function(el) {
   }
 };
 
+// ── INLINE CALENDAR WIDGET ──
+window._calState = { year: 0, month: 0, start: null, end: null, range: false };
+
+window.initCalendarWidget = function() {
+  const wrap = document.getElementById('pg-calendar-wrap');
+  if (!wrap) return;
+  const now = new Date();
+  window._calState = { year: now.getFullYear(), month: now.getMonth(), start: null, end: null, range: false };
+  renderCalendar();
+};
+
+window.renderCalendar = function() {
+  const wrap = document.getElementById('pg-calendar-wrap');
+  if (!wrap) return;
+  const { year, month, start, end, range } = window._calState;
+  const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const days = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+
+  const first = new Date(year, month, 1);
+  let startDay = first.getDay() - 1; // Mon=0
+  if (startDay < 0) startDay = 6;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+
+  let cells = '';
+  // Empty cells before first day
+  for (let i = 0; i < startDay; i++) cells += '<div class="cal-cell cal-empty"></div>';
+  // Day cells
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    let cls = 'cal-day';
+    if (dateStr === todayStr) cls += ' cal-today';
+    if (start && dateStr === start) cls += ' cal-selected cal-start';
+    if (end && dateStr === end) cls += ' cal-selected cal-end';
+    if (start && end && dateStr > start && dateStr < end) cls += ' cal-in-range';
+    if (start && !end && dateStr === start) cls += ' cal-selected';
+    cells += `<div class="cal-cell"><button class="${cls}" data-date="${dateStr}" onclick="calDayClick('${dateStr}')">${d}</button></div>`;
+  }
+
+  const hasSelection = start || end;
+
+  wrap.innerHTML = `
+    <div class="pg-calendar">
+      <div class="cal-header">
+        <button class="cal-nav" onclick="calNav(-1)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <span class="cal-month-year">${months[month]} ${year}</span>
+        <button class="cal-nav" onclick="calNav(1)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 6 15 12 9 18"/></svg>
+        </button>
+      </div>
+      <div class="cal-mode">
+        <button class="cal-mode-btn ${!range?'active':''}" onclick="calSetMode(false)">Data</button>
+        <button class="cal-mode-btn ${range?'active':''}" onclick="calSetMode(true)">Intervalo</button>
+        ${hasSelection ? '<button class="cal-clear-btn" onclick="calClear()">Limpar</button>' : ''}
+      </div>
+      <div class="cal-weekdays">${days.map(d => `<div class="cal-wk">${d}</div>`).join('')}</div>
+      <div class="cal-grid">${cells}</div>
+    </div>`;
+};
+
+window.calNav = function(dir) {
+  window._calState.month += dir;
+  if (window._calState.month > 11) { window._calState.month = 0; window._calState.year++; }
+  if (window._calState.month < 0) { window._calState.month = 11; window._calState.year--; }
+  renderCalendar();
+};
+
+window.calSetMode = function(isRange) {
+  window._calState.range = isRange;
+  window._calState.start = null;
+  window._calState.end = null;
+  renderCalendar();
+  applyAdvancedFilters();
+};
+
+window.calDayClick = function(dateStr) {
+  const s = window._calState;
+  if (!s.range) {
+    // Single date mode – toggle
+    s.start = (s.start === dateStr) ? null : dateStr;
+    s.end = null;
+  } else {
+    // Range mode
+    if (!s.start || (s.start && s.end)) {
+      s.start = dateStr; s.end = null;
+    } else {
+      if (dateStr < s.start) { s.end = s.start; s.start = dateStr; }
+      else if (dateStr === s.start) { s.start = null; }
+      else { s.end = dateStr; }
+    }
+  }
+  renderCalendar();
+  applyAdvancedFilters();
+};
+
+window.calClear = function() {
+  window._calState.start = null;
+  window._calState.end = null;
+  renderCalendar();
+  applyAdvancedFilters();
+};
+
 // ── ADVANCED FILTERS ──
 window.applyAdvancedFilters = function() {
   const events = window._homeEvents;
   if (!events) return;
   const cityVal = document.getElementById('filter-city')?.value || '';
   const priceVal = document.getElementById('filter-price')?.value || '';
-  const dateStart = document.getElementById('filter-date-start')?.value || '';
-  const dateEnd = document.getElementById('filter-date-end')?.value || '';
+  const { start: dateStart, end: dateEnd } = window._calState;
 
   document.querySelectorAll('.event-card').forEach(card => {
     const modality = card.getAttribute('data-modality') || '';
@@ -149,25 +244,20 @@ window.applyAdvancedFilters = function() {
     else if (priceVal === '100-200') showPrice = fee > 100 && fee <= 200;
     else if (priceVal === '200+') showPrice = fee > 200;
 
-    // Date range filter
+    // Date range filter (from calendar widget)
     let showDate = true;
-    if (eventDate) {
-      const evDate = new Date(eventDate);
-      if (dateStart) showDate = evDate >= new Date(dateStart);
-      if (showDate && dateEnd) showDate = evDate <= new Date(dateEnd + 'T23:59:59');
+    if (eventDate && (dateStart || dateEnd)) {
+      const evDateStr = eventDate.slice(0, 10);
+      if (dateStart && !dateEnd) showDate = evDateStr === dateStart;
+      else if (dateStart) showDate = evDateStr >= dateStart;
+      if (showDate && dateEnd) showDate = evDateStr <= dateEnd;
     }
 
     card.style.display = (showMod && showCity && showPrice && showDate) ? '' : 'none';
   });
 };
 
-window.clearDateFilters = function() {
-  const s = document.getElementById('filter-date-start');
-  const e = document.getElementById('filter-date-end');
-  if (s) s.value = '';
-  if (e) e.value = '';
-  applyAdvancedFilters();
-};
+window.clearDateFilters = function() { calClear(); };
 
 // ── SHARE EVENT ──
 window.shareEvent = async function(title, id) {
