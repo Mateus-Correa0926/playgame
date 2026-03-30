@@ -4,7 +4,7 @@ window.renderEventReport = async function(el, eventId) {
   el.innerHTML = `
     <div style="background:var(--black);padding:16px">
       <button class="back-btn" onclick="navigate('#/eventos/${eventId}')" style="color:rgba(255,255,255,.7)">← Voltar ao evento</button>
-      <h1 style="color:var(--white);font-size:1.6rem">📊 Relatório do Evento</h1>
+      <h1 style="color:var(--white);font-size:1.6rem">Relatório do Evento</h1>
     </div>
     <div class="container" style="padding-top:16px"><div class="loading"><div class="spinner"></div></div></div>`;
 
@@ -15,7 +15,7 @@ window.renderEventReport = async function(el, eventId) {
     document.getElementById('page-content').innerHTML = `
       <div style="background:var(--black);padding:16px 16px 12px">
         <button class="back-btn" onclick="navigate('#/eventos/${eventId}')" style="color:rgba(255,255,255,.7);margin-bottom:8px">← Voltar ao evento</button>
-        <h1 style="color:var(--white);font-size:1.6rem;margin-bottom:2px">📊 Relatório</h1>
+        <h1 style="color:var(--white);font-size:1.6rem;margin-bottom:2px">Relatório</h1>
         <div style="color:rgba(255,255,255,.5);font-size:.82rem">${ev.title}</div>
       </div>
       <div class="container" style="padding-top:16px">
@@ -72,21 +72,21 @@ window.renderEventReport = async function(el, eventId) {
 
         <!-- Tabs: Pagos / Pendentes / Comentários -->
         <div class="tabs">
-          <button class="tab-btn active" data-tab="rpt-paid">✅ Pagos (${summary.paid})</button>
-          <button class="tab-btn" data-tab="rpt-pending">⏳ Pendentes (${summary.pending})</button>
-          <button class="tab-btn" data-tab="rpt-comments">💬 Comentários (${comments.length})</button>
+          <button class="tab-btn active" data-tab="rpt-paid">Pagos (${summary.paid})</button>
+          <button class="tab-btn" data-tab="rpt-pending">Pendentes (${summary.pending})</button>
+          <button class="tab-btn" data-tab="rpt-comments">Comentários (${comments.length})</button>
         </div>
 
         <div id="tab-rpt-paid" class="tab-content">
           ${paid_list.length > 0
             ? `<div class="athlete-list">${paid_list.map(r => buildReportAthleteRow(r, 'paid')).join('')}</div>`
-            : '<div class="empty-state"><div class="icon">💳</div><p>Nenhum pagamento confirmado.</p></div>'}
+            : '<div class="empty-state"><p>Nenhum pagamento confirmado.</p></div>'}
         </div>
 
         <div id="tab-rpt-pending" class="tab-content" style="display:none">
           ${pending_list.length > 0
             ? `<div class="athlete-list">${pending_list.map(r => buildReportAthleteRow(r, 'pending')).join('')}</div>`
-            : '<div class="empty-state"><div class="icon">⏳</div><p>Nenhum inscrito pendente.</p></div>'}
+            : '<div class="empty-state"><p>Nenhum inscrito pendente.</p></div>'}
         </div>
 
         <div id="tab-rpt-comments" class="tab-content" style="display:none">
@@ -98,15 +98,15 @@ window.renderEventReport = async function(el, eventId) {
                   <div class="comment-meta"><strong>${c.user_name}</strong><span>${timeAgo(c.created_at)}</span><span class="status-pill status-${c.user_role==='organizador'?'confirmado':'pendente'}" style="font-size:.65rem">${c.user_role}</span></div>
                   <div class="comment-text">${c.message}</div>
                 </div>
-              </div>`).join('') || '<div class="empty-state"><div class="icon">💬</div><p>Nenhum comentário ainda.</p></div>'}
+              </div>`).join('') || '<div class="empty-state"><p>Nenhum comentário ainda.</p></div>'}
           </div>
         </div>
 
         <!-- Ações rápidas -->
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:24px">
-          <button class="btn btn-primary btn-sm" onclick="navigate('#/pagamentos-evento/${eventId}')">💰 Gerenciar Pagamentos</button>
-          <button class="btn btn-secondary btn-sm" onclick="navigate('#/chaveamento/${eventId}')">🏆 Chaveamento</button>
-          <button class="btn btn-outline btn-sm" onclick="window.print()">🖨️ Imprimir</button>
+          <button class="btn btn-primary btn-sm" onclick="navigate('#/pagamentos-evento/${eventId}')">Gerenciar Pagamentos</button>
+          <button class="btn btn-secondary btn-sm" onclick="navigate('#/chaveamento/${eventId}')">Chaveamento</button>
+          <button class="btn btn-outline btn-sm" onclick="window.print()">Imprimir</button>
         </div>
       </div>`;
 
@@ -123,7 +123,7 @@ window.renderEventReport = async function(el, eventId) {
     });
 
   } catch (err) {
-    document.getElementById('page-content').innerHTML = `<div class="container" style="padding-top:20px"><div class="alert alert-error"><span class="alert-icon">⚠️</span>${err.message}</div></div>`;
+    document.getElementById('page-content').innerHTML = `<div class="container" style="padding-top:20px"><div class="alert alert-error"><span class="alert-icon">!</span>${err.message}</div></div>`;
   }
 };
 

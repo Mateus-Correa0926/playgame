@@ -5,7 +5,7 @@ window.renderPaymentsPage = async function(el, eventId) {
   el.innerHTML = `
     <div style="background:var(--black);padding:16px 16px 12px">
       <button class="back-btn" onclick="navigate('#/eventos/${eventId}')" style="color:rgba(255,255,255,.7);margin-bottom:8px">← Voltar ao evento</button>
-      <h1 style="color:var(--white);font-size:1.6rem">💰 Pagamentos</h1>
+      <h1 style="color:var(--white);font-size:1.6rem">Pagamentos</h1>
     </div>
     <div class="container" style="padding-top:16px"><div class="loading"><div class="spinner"></div></div></div>`;
 
@@ -22,7 +22,7 @@ window.renderPaymentsPage = async function(el, eventId) {
         <button class="back-btn" onclick="navigate('#/eventos/${eventId}')" style="color:rgba(255,255,255,.7);margin-bottom:8px">← Voltar ao evento</button>
         <div style="display:flex;justify-content:space-between;align-items:flex-end">
           <div>
-            <h1 style="color:var(--white);font-size:1.6rem;margin-bottom:2px">💰 Pagamentos</h1>
+            <h1 style="color:var(--white);font-size:1.6rem;margin-bottom:2px">Pagamentos</h1>
             <div style="color:rgba(255,255,255,.5);font-size:.82rem">${eventData?.title || ''}</div>
           </div>
         </div>
@@ -37,30 +37,30 @@ window.renderPaymentsPage = async function(el, eventId) {
 
         ${pending.length > 0 ? `
           <div class="section-header mb-12">
-            <div class="section-title" style="color:var(--orange)">⏳ Aguardando revisão (${pending.length})</div>
+            <div class="section-title" style="color:var(--orange)">Aguardando revisão (${pending.length})</div>
           </div>
           <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px">
             ${pending.map(p => buildPaymentCard(p, 'pending', eventData?.registration_fee)).join('')}
           </div>` : ''}
 
         <div class="section-header mb-12">
-          <div class="section-title text-green">✅ Pagamentos confirmados (${paid.length}/${eventData?.participant_limit})</div>
+          <div class="section-title text-green">Pagamentos confirmados (${paid.length}/${eventData?.participant_limit})</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px">
           ${paid.map(p => buildPaymentCard(p, 'paid', eventData?.registration_fee)).join('')}
-          ${paid.length === 0 ? '<div class="empty-state"><div class="icon">💳</div><p>Nenhum pagamento confirmado ainda.</p></div>' : ''}
+          ${paid.length === 0 ? '<div class="empty-state"><p>Nenhum pagamento confirmado ainda.</p></div>' : ''}
         </div>
 
         ${waiting.length > 0 ? `
           <div class="section-header mb-12">
-            <div class="section-title" style="color:var(--text-muted)">⌛ Aguardando comprovante (${waiting.length})</div>
+            <div class="section-title" style="color:var(--text-muted)">⌒ Aguardando comprovante (${waiting.length})</div>
           </div>
           <div style="display:flex;flex-direction:column;gap:10px">
             ${waiting.map(p => buildPaymentCard(p, 'waiting', eventData?.registration_fee)).join('')}
           </div>` : ''}
       </div>`;
   } catch (err) {
-    document.getElementById('page-content').innerHTML = `<div class="container" style="padding-top:20px"><div class="alert alert-error"><span class="alert-icon">⚠️</span>${err.message}</div></div>`;
+    document.getElementById('page-content').innerHTML = `<div class="container" style="padding-top:20px"><div class="alert alert-error">${err.message}</div></div>`;
   }
 };
 
@@ -90,14 +90,14 @@ function buildPaymentCard(p, type, fee) {
 
         ${hasProof ? `
           <div style="margin-top:10px;padding:8px 10px;background:var(--gray-light);border-radius:var(--radius-sm);display:flex;align-items:center;gap:8px">
-            <span style="font-size:1rem">📎</span>
+            <span style="font-size:1rem"></span>
             <a href="${p.payment_proof}" target="_blank" style="flex:1;font-size:.82rem;color:var(--orange);font-weight:600;text-decoration:none">Ver comprovante</a>
           </div>` : ''}
 
         ${type === 'pending' ? `
           <div style="display:flex;gap:8px;margin-top:12px">
-            <button class="btn btn-secondary btn-sm" style="flex:1" onclick="approvePayment(${p.id})">✅ Confirmar</button>
-            <button class="btn btn-danger btn-sm" style="flex:1" onclick="rejectPayment(${p.id})">❌ Recusar</button>
+            <button class="btn btn-secondary btn-sm" style="flex:1" onclick="approvePayment(${p.id})">Confirmar</button>
+            <button class="btn btn-danger btn-sm" style="flex:1" onclick="rejectPayment(${p.id})">Recusar</button>
           </div>` : ''}
 
         ${type === 'paid' ? `
@@ -107,7 +107,7 @@ function buildPaymentCard(p, type, fee) {
 
         ${type === 'waiting' ? `
           <div style="margin-top:10px">
-            <button class="btn btn-outline btn-sm" style="width:100%" onclick="approvePayment(${p.id})">✅ Confirmar mesmo assim</button>
+            <button class="btn btn-outline btn-sm" style="width:100%" onclick="approvePayment(${p.id})">Confirmar mesmo assim</button>
           </div>` : ''}
       </div>
     </div>`;
@@ -142,11 +142,11 @@ window.openProofUploadModal = function(regId) {
     <div class="modal-overlay" id="proof-modal">
       <div class="modal">
         <div class="modal-header">
-          <h2>📎 Enviar Comprovante</h2>
+          <h2>Enviar Comprovante</h2>
           <button class="modal-close" onclick="document.getElementById('proof-modal').remove()">✕</button>
         </div>
         <div class="modal-body">
-          <div class="alert alert-info"><span class="alert-icon">ℹ️</span>Envie o comprovante de pagamento (PIX, transferência ou depósito). O organizador confirmará em breve.</div>
+          <div class="alert alert-info"><span class="alert-icon">i</span>Envie o comprovante de pagamento (PIX, transferência ou depósito). O organizador confirmará em breve.</div>
           <div class="form-group" style="margin-top:14px">
             <label class="form-label">Arquivo (JPG, PNG ou PDF)</label>
             <input type="file" class="form-control" id="proof-file" accept="image/*,.pdf">
@@ -157,7 +157,7 @@ window.openProofUploadModal = function(regId) {
         </div>
         <div class="modal-footer">
           <button class="btn btn-outline" onclick="document.getElementById('proof-modal').remove()">Cancelar</button>
-          <button class="btn btn-primary" id="send-proof-btn" onclick="sendProof(${regId})">📤 Enviar comprovante</button>
+          <button class="btn btn-primary" id="send-proof-btn" onclick="sendProof(${regId})">Enviar comprovante</button>
         </div>
       </div>
     </div>`;
@@ -199,10 +199,10 @@ window.sendProof = async function(regId) {
       navigate('#/'); setTimeout(() => navigate(hash), 100);
     } else {
       toast(data.error, 'error');
-      btn.disabled = false; btn.textContent = '📤 Enviar comprovante';
+      btn.disabled = false; btn.textContent = 'Enviar comprovante';
     }
   } catch (err) {
     toast('Erro ao enviar arquivo.', 'error');
-    btn.disabled = false; btn.textContent = '📤 Enviar comprovante';
+    btn.disabled = false; btn.textContent = 'Enviar comprovante';
   }
 };

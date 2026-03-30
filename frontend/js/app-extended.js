@@ -273,4 +273,4 @@ window.addEventListener('popstate', () => render());
   }
 })();
 
-console.log('🏖 PlayGAME Extended Features loaded');
+console.log('PlayGAME Extended Features loaded');

@@ -49,7 +49,7 @@ window.renderPage = function(hash) {
 // ── LISTA DE ATLETAS ──
 window.renderAthletesList = async function(el) {
   el.innerHTML = `
-    <div class="page-header"><div class="container"><h1>👥 Atletas</h1></div></div>
+    <div class="page-header"><div class="container"><h1>Atletas</h1></div></div>
     <div class="container"><div class="loading"><div class="spinner"></div></div></div>`;
   try {
     const athletes = await apiFetch('/admin/athletes');
@@ -74,19 +74,19 @@ window.renderAthletesList = async function(el) {
             <div><span style="font-size:.7rem;color:var(--text-muted)">Membro desde</span><div style="font-weight:700;font-size:.9rem">${new Date(a.created_at).toLocaleDateString('pt-BR')}</div></div>
           </div>
         </div>
-      </div>`).join('') || '<div class="empty-state"><div class="icon">👥</div><p>Nenhum atleta cadastrado.</p></div>';
+      </div>`).join('') || '<div class="empty-state"><p>Nenhum atleta cadastrado.</p></div>';
 
     document.getElementById('page-content').innerHTML = `
       <div class="page-header">
         <div class="container">
           <button class="back-btn" onclick="history.back()">← Voltar</button>
-          <h1>👥 Atletas cadastrados</h1>
+          <h1>Atletas cadastrados</h1>
           <p>${athletes.length} atleta(s) no sistema</p>
         </div>
       </div>
       <div class="container">${rows}</div>`;
   } catch (err) {
-    el.innerHTML = `<div class="container" style="padding-top:20px"><div class="alert alert-error"><span class="alert-icon">⚠️</span>${err.message}</div></div>`;
+    el.innerHTML = `<div class="container" style="padding-top:20px"><div class="alert alert-error"><span class="alert-icon">!</span>${err.message}</div></div>`;
   }
 };
 
@@ -94,18 +94,18 @@ window.renderAthletesList = async function(el) {
 window.renderSettings = function(el) {
   const user = getUser();
   el.innerHTML = `
-    <div class="page-header"><div class="container"><h1>⚙️ Configurações</h1></div></div>
+    <div class="page-header"><div class="container"><h1>Configurações</h1></div></div>
     <div class="container">
       <div class="card mb-12">
         <div class="card-body">
           <div style="font-size:.78rem;font-weight:700;color:var(--text-muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px">Conta</div>
           <div onclick="navigate('#/perfil')" style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--gray-border);cursor:pointer">
-            <span style="font-size:1.2rem">👤</span>
+            <span style="font-size:1.2rem"></span>
             <div style="flex:1"><div style="font-weight:600">Editar perfil</div><div style="font-size:.8rem;color:var(--text-muted)">${user?.name || ''}</div></div>
             <span style="color:var(--text-muted)">›</span>
           </div>
           <div onclick="navigate('#/perfil')" style="display:flex;align-items:center;gap:12px;padding:12px 0;cursor:pointer">
-            <span style="font-size:1.2rem">🔒</span>
+            <span style="font-size:1.2rem"></span>
             <div style="flex:1"><div style="font-weight:600">Alterar senha</div></div>
             <span style="color:var(--text-muted)">›</span>
           </div>
@@ -116,12 +116,12 @@ window.renderSettings = function(el) {
         <div class="card-body">
           <div style="font-size:.78rem;font-weight:700;color:var(--text-muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px">Organizador</div>
           <div onclick="navigate('#/arenas')" style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--gray-border);cursor:pointer">
-            <span style="font-size:1.2rem">🏟</span>
+            <span style="font-size:1.2rem"></span>
             <div style="flex:1"><div style="font-weight:600">Gerenciar arenas</div></div>
             <span style="color:var(--text-muted)">›</span>
           </div>
           <div onclick="navigate('#/atletas')" style="display:flex;align-items:center;gap:12px;padding:12px 0;cursor:pointer">
-            <span style="font-size:1.2rem">👥</span>
+            <span style="font-size:1.2rem"></span>
             <div style="flex:1"><div style="font-weight:600">Ver atletas</div></div>
             <span style="color:var(--text-muted)">›</span>
           </div>
@@ -131,17 +131,17 @@ window.renderSettings = function(el) {
         <div class="card-body">
           <div style="font-size:.78rem;font-weight:700;color:var(--text-muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px">Sistema</div>
           <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--gray-border)">
-            <span style="font-size:1.2rem">📱</span>
+            <span style="font-size:1.2rem"></span>
             <div style="flex:1"><div style="font-weight:600">Versão</div><div style="font-size:.8rem;color:var(--text-muted)">PlayGAME v1.0.0 Beta</div></div>
           </div>
           <div onclick="clearCacheAndReload()" style="display:flex;align-items:center;gap:12px;padding:12px 0;cursor:pointer">
-            <span style="font-size:1.2rem">🔄</span>
+            <span style="font-size:1.2rem"></span>
             <div style="flex:1"><div style="font-weight:600">Limpar cache e recarregar</div></div>
             <span style="color:var(--text-muted)">›</span>
           </div>
         </div>
       </div>
-      <button class="btn btn-danger btn-block" id="logout-btn">🚪 Sair da conta</button>
+      <button class="btn btn-danger btn-block" id="logout-btn">Sair da conta</button>
     </div>`;
 };
 
@@ -163,9 +163,9 @@ if (_origBuildEventDetailHTML) {
     if (isOwner) {
       const extraBtns = `
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
-          <button class="btn btn-outline btn-sm" onclick="navigate('#/pagamentos-evento/${ev.id}')">💰 Pagamentos</button>
-          <button class="btn btn-outline btn-sm" onclick="navigate('#/chaveamento/${ev.id}')">🏆 Chaveamento</button>
-          <button class="btn btn-outline btn-sm" onclick="navigate('#/relatorio/${ev.id}')">📊 Relatório</button>
+          <button class="btn btn-outline btn-sm" onclick="navigate('#/pagamentos-evento/${ev.id}')">Pagamentos</button>
+          <button class="btn btn-outline btn-sm" onclick="navigate('#/chaveamento/${ev.id}')">Chaveamento</button>
+          <button class="btn btn-outline btn-sm" onclick="navigate('#/relatorio/${ev.id}')">Relatório</button>
         </div>`;
       html = html.replace('</div>\n      </div><!-- /#main-app -->', extraBtns + '</div>\n      </div><!-- /#main-app -->');
     }
@@ -190,7 +190,7 @@ window.renderMyRegistrations = async function(el) {
   const user = getUser();
   if (user?.role !== 'atleta') return navigate('#/');
   el.innerHTML = `
-    <div class="page-header"><div class="container"><h1>📋 Minhas Inscrições</h1></div></div>
+    <div class="page-header"><div class="container"><h1>Minhas Inscrições</h1></div></div>
     <div class="container"><div class="loading"><div class="spinner"></div></div></div>`;
   try {
     const regs = await apiFetch('/registrations/my');
@@ -210,19 +210,19 @@ window.renderMyRegistrations = async function(el) {
             <span class="athlete-status-badge ${r.payment_status==='pago'?'badge-paid':'badge-pending'}">${r.payment_status==='pago'?'✓ Pago':'Pendente'}</span>
           </div>
           <div class="event-card-meta">
-            <div class="event-meta-row"><span class="icon">📅</span>${formatDate(r.event_date)} às ${(r.start_time||'').slice(0,5)}</div>
-            <div class="event-meta-row"><span class="icon">📍</span>${r.arena_name}, ${r.arena_city}</div>
-            <div class="event-meta-row"><span class="icon">💰</span>${formatCurrency(r.registration_fee)}</div>
-            ${r.team_name ? `<div class="event-meta-row"><span class="icon">👥</span>${r.team_name}</div>` : ''}
-            ${r.partner_name ? `<div class="event-meta-row"><span class="icon">🤝</span>${r.partner_name}</div>` : ''}
+            <div class="event-meta-row"><span class="icon"></span>${formatDate(r.event_date)} às ${(r.start_time||'').slice(0,5)}</div>
+            <div class="event-meta-row"><span class="icon"></span>${r.arena_name}, ${r.arena_city}</div>
+            <div class="event-meta-row"><span class="icon"></span>${formatCurrency(r.registration_fee)}</div>
+            ${r.team_name ? `<div class="event-meta-row"><span class="icon"></span>${r.team_name}</div>` : ''}
+            ${r.partner_name ? `<div class="event-meta-row"><span class="icon"></span>${r.partner_name}</div>` : ''}
           </div>
         </div>
         ${r.payment_status === 'pendente' ? `
           <div class="card-footer" style="justify-content:space-between">
             <span style="font-size:.8rem;color:var(--text-muted)">Pagamento pendente</span>
             <div style="display:flex;gap:8px">
-              <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();openProofUploadModal(${r.id})">📎 Enviar comprovante</button>
-              <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();openEditRegModal(${r.id})">✏️</button>
+              <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();openProofUploadModal(${r.id})">Enviar comprovante</button>
+              <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();openEditRegModal(${r.id})">Editar</button>
             </div>
           </div>` : `
           <div class="card-footer">
@@ -237,7 +237,7 @@ window.renderMyRegistrations = async function(el) {
     document.getElementById('page-content').innerHTML = `
       <div class="page-header">
         <div class="container">
-          <h1>📋 Minhas Inscrições</h1>
+          <h1>Minhas Inscrições</h1>
           <p>${regs.length} inscrição(ões) no total</p>
         </div>
       </div>
@@ -250,20 +250,20 @@ window.renderMyRegistrations = async function(el) {
           ${past_html}` : ''}
         ${regs.length === 0 ? `
           <div class="empty-state">
-            <div class="icon">🏐</div>
+            <div class="icon"></div>
             <p>Você ainda não está inscrito em nenhum evento.</p>
             <a href="#/" class="btn btn-primary" style="margin-top:14px">Ver eventos disponíveis</a>
           </div>` : ''}
         <div style="margin-top:24px">
-          <a href="#/" class="btn btn-outline btn-block">🔍 Explorar mais eventos</a>
+          <a href="#/" class="btn btn-outline btn-block">Explorar mais eventos</a>
         </div>
       </div>`;
   } catch (err) {
-    el.innerHTML = `<div class="container" style="padding-top:20px"><div class="alert alert-error"><span class="alert-icon">⚠️</span>${err.message}</div></div>`;
+    el.innerHTML = `<div class="container" style="padding-top:20px"><div class="alert alert-error"><span class="alert-icon">!</span>${err.message}</div></div>`;
   }
 };
 
-console.log('🏖 PlayGAME Router Extension loaded');
+console.log('PlayGAME Router Extension loaded');
 
 // ── EXTENDER ROUTER COM NOVAS ROTAS ──
 const _rp2 = window.renderPage;
@@ -291,17 +291,17 @@ window.renderArenas = async function(el) {
       <div class="card" style="margin-bottom:10px;cursor:pointer" onclick="navigate('#/arenas/${a.id}')">
         <div class="card-body" style="padding:14px 16px">
           <div style="display:flex;align-items:center;gap:12px">
-            <div style="width:44px;height:44px;border-radius:var(--radius-sm);background:var(--green-xlight);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0">🏟</div>
+            <div style="width:44px;height:44px;border-radius:var(--radius-sm);background:var(--green-xlight);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0"></div>
             <div style="flex:1;min-width:0">
               <div style="font-weight:700;font-size:1rem">${a.name}</div>
-              <div style="font-size:.8rem;color:var(--text-muted)">📍 ${a.address}, ${a.city} — ${a.state}</div>
-              ${a.phone ? `<div style="font-size:.78rem;color:var(--text-muted)">📞 ${a.phone}</div>` : ''}
+              <div style="font-size:.8rem;color:var(--text-muted)">${a.address}, ${a.city} — ${a.state}</div>
+              ${a.phone ? `<div style="font-size:.78rem;color:var(--text-muted)">${a.phone}</div>` : ''}
             </div>
             <span style="color:var(--text-muted);font-size:1.2rem">›</span>
           </div>
           ${a.description ? `<div style="margin-top:8px;font-size:.82rem;color:var(--text-secondary);padding-top:8px;border-top:1px solid var(--gray-border)">${a.description.slice(0,120)}${a.description.length>120?'…':''}</div>` : ''}
         </div>
-      </div>`).join('') || '<div class="empty-state"><div class="icon">🏟</div><p>Nenhuma arena cadastrada.</p></div>';
+      </div>`).join('') || '<div class="empty-state"><div class="icon"></div><p>Nenhuma arena cadastrada.</p></div>';
 
     el.innerHTML = `
       <div class="page-header">
@@ -314,7 +314,7 @@ window.renderArenas = async function(el) {
       </div>
       <div class="container">${list}</div>`;
   } catch (err) {
-    el.innerHTML = `<div class="container" style="padding-top:20px"><div class="alert alert-error"><span class="alert-icon">⚠️</span>${err.message}</div></div>`;
+    el.innerHTML = `<div class="container" style="padding-top:20px"><div class="alert alert-error"><span class="alert-icon">!</span>${err.message}</div></div>`;
   }
 };
 
