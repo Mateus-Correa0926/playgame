@@ -125,7 +125,7 @@ function updateNav() {
   const user = getUser();
   if (!user) return;
 
-  // Avatar
+  // Avatar in topbar
   const avatarEl = $('#nav-avatar');
   if (avatarEl) {
     if (user.avatar) {
@@ -135,12 +135,81 @@ function updateNav() {
     }
   }
 
-  // Bottom nav ativo
+  // Topbar title based on hash
   const hash = window.location.hash;
+  const titleEl = $('#topbar-title');
+  if (titleEl) {
+    const titleMap = {
+      '#/': user.role === 'organizador' ? 'Dashboard' : 'Início',
+      '#/eventos': 'Eventos',
+      '#/criar-evento': 'Novo Evento',
+      '#/minhas-inscricoes': 'Minhas Inscrições',
+      '#/perfil': 'Meu Perfil',
+      '#/arenas': 'Arenas',
+      '#/dashboard': 'Dashboard',
+      '#/atletas': 'Atletas',
+      '#/configuracoes': 'Configurações',
+      '#/busca': 'Buscar',
+    };
+    titleEl.textContent = titleMap[hash] || (hash.startsWith('#/eventos/') ? 'Evento' : 'PlayGAME');
+  }
+
+  // Sidebar nav
+  updateSidebar(user);
+
+  // Bottom nav active
   $$('.bottom-nav-item').forEach(el => {
     const href = el.getAttribute('data-href') || '';
     el.classList.toggle('active', hash.startsWith(href) && href !== '');
   });
+
+  // Close sidebar on mobile after navigation
+  const sidebar = $('#sidebar');
+  const backdrop = $('#sidebar-backdrop');
+  if (sidebar) sidebar.classList.remove('open');
+  if (backdrop) backdrop.classList.remove('open');
+}
+
+function updateSidebar(user) {
+  const hash = window.location.hash;
+  const navEl = $('#sidebar-nav');
+  const footerEl = $('#sidebar-footer');
+  if (!navEl || !footerEl) return;
+
+  const isOrg = user.role === 'organizador';
+  const navItems = isOrg ? `
+    <div class="nav-section-title">Principal</div>
+    <a class="nav-item ${hash === '#/' || hash === '#/dashboard' ? 'active' : ''}" href="#/">🏠 Dashboard</a>
+    <a class="nav-item ${hash === '#/criar-evento' ? 'active' : ''}" href="#/criar-evento">➕ Novo Evento</a>
+    <a class="nav-item ${hash === '#/eventos' ? 'active' : ''}" href="#/eventos">🏆 Eventos</a>
+    <div class="nav-section-title">Gerenciar</div>
+    <a class="nav-item ${hash === '#/arenas' ? 'active' : ''}" href="#/arenas">🏟 Arenas</a>
+    <a class="nav-item ${hash === '#/atletas' ? 'active' : ''}" href="#/atletas">👥 Atletas</a>
+    <div class="nav-section-title">Conta</div>
+    <a class="nav-item ${hash === '#/perfil' ? 'active' : ''}" href="#/perfil">👤 Perfil</a>
+    <a class="nav-item ${hash === '#/configuracoes' ? 'active' : ''}" href="#/configuracoes">⚙️ Configurações</a>
+  ` : `
+    <div class="nav-section-title">Principal</div>
+    <a class="nav-item ${hash === '#/' || hash === '' ? 'active' : ''}" href="#/">🏠 Início</a>
+    <a class="nav-item ${hash === '#/eventos' ? 'active' : ''}" href="#/eventos">🏆 Eventos</a>
+    <a class="nav-item ${hash === '#/busca' ? 'active' : ''}" href="#/busca">🔍 Buscar</a>
+    <div class="nav-section-title">Minha Conta</div>
+    <a class="nav-item ${hash === '#/minhas-inscricoes' ? 'active' : ''}" href="#/minhas-inscricoes">📋 Inscrições</a>
+    <a class="nav-item ${hash === '#/perfil' ? 'active' : ''}" href="#/perfil">👤 Perfil</a>
+    <a class="nav-item ${hash === '#/configuracoes' ? 'active' : ''}" href="#/configuracoes">⚙️ Configurações</a>
+  `;
+
+  navEl.innerHTML = navItems;
+  footerEl.innerHTML = `
+    <div class="sidebar-user">
+      <div class="avatar">${user.avatar ? `<img src="${user.avatar}" alt="">` : avatarInitials(user.name)}</div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name">${user.name}</div>
+        <div class="sidebar-user-role">${user.role}</div>
+      </div>
+    </div>
+    <button class="nav-item" id="logout-btn" style="color:var(--gray-500)">🚪 Sair</button>
+  `;
 }
 
 function renderPage(hash) {
@@ -551,10 +620,10 @@ function buildEventDetailHTML(ev, user, isOwner, myReg) {
       ${orgActions}
 
       <div class="stats-row">
-        <div class="stat-card orange"><div class="stat-value">${formatCurrency(ev.registration_fee)}</div><div class="stat-label">Inscrição</div></div>
-        <div class="stat-card"><div class="stat-value">${ev.participant_limit}</div><div class="stat-label">Vagas (pagos)</div></div>
-        <div class="stat-card green"><div class="stat-value">${paid.length}</div><div class="stat-label">Confirmados</div></div>
-        <div class="stat-card"><div class="stat-value">${pending.length}</div><div class="stat-label">Aguardando</div></div>
+        <div class="stat-card"><div class="stat-icon stat-icon-orange">💰</div><div><div class="stat-value">${formatCurrency(ev.registration_fee)}</div><div class="stat-label">Inscrição</div></div></div>
+        <div class="stat-card"><div class="stat-icon stat-icon-black">🎯</div><div><div class="stat-value">${ev.participant_limit}</div><div class="stat-label">Vagas (pagos)</div></div></div>
+        <div class="stat-card"><div class="stat-icon stat-icon-military">✅</div><div><div class="stat-value">${paid.length}</div><div class="stat-label">Confirmados</div></div></div>
+        <div class="stat-card"><div class="stat-icon stat-icon-orange">⏳</div><div><div class="stat-value">${pending.length}</div><div class="stat-label">Aguardando</div></div></div>
       </div>
 
       <!-- Arena Status -->
@@ -927,10 +996,10 @@ async function renderDashboard(el) {
       </div>
       <div class="container" style="padding-top:16px">
         <div class="stats-row">
-          <div class="stat-card orange"><div class="stat-value">${myEvents.length}</div><div class="stat-label">Eventos</div></div>
-          <div class="stat-card"><div class="stat-value">${totalRegs}</div><div class="stat-label">Inscritos</div></div>
-          <div class="stat-card green"><div class="stat-value">${totalPaid}</div><div class="stat-label">Pagamentos</div></div>
-          <div class="stat-card"><div class="stat-value">${pending}</div><div class="stat-label">Notificações</div></div>
+          <div class="stat-card"><div class="stat-icon stat-icon-orange">🏆</div><div><div class="stat-value">${myEvents.length}</div><div class="stat-label">Eventos</div></div></div>
+          <div class="stat-card"><div class="stat-icon stat-icon-black">👥</div><div><div class="stat-value">${totalRegs}</div><div class="stat-label">Inscritos</div></div></div>
+          <div class="stat-card"><div class="stat-icon stat-icon-military">💰</div><div><div class="stat-value">${totalPaid}</div><div class="stat-label">Pagamentos</div></div></div>
+          <div class="stat-card"><div class="stat-icon stat-icon-orange">🔔</div><div><div class="stat-value">${pending}</div><div class="stat-label">Notificações</div></div></div>
         </div>
 
         <div class="section-header">
@@ -953,37 +1022,62 @@ async function renderProfile(el) {
     const user = await apiFetch('/users/me');
     if (!user) return;
     el.innerHTML = `
-      <div class="profile-header">
-        <div class="profile-avatar-wrap">
-          <div class="profile-avatar" onclick="$('#avatar-input').click()">
-            ${user.avatar ? `<img src="${user.avatar}" alt="">` : avatarInitials(user.name)}
+      <div class="profile-page">
+        <div class="profile-cover"><div class="profile-cover-pattern"></div></div>
+        <div class="profile-body">
+          <div class="profile-avatar-section">
+            <div class="profile-avatar-xl" onclick="$('#avatar-input').click()">
+              ${user.avatar ? `<img src="${user.avatar}" alt="">` : avatarInitials(user.name)}
+              <div class="avatar-overlay">📷</div>
+              <input type="file" id="avatar-input" accept="image/*" style="display:none" onchange="uploadAvatar(this)">
+            </div>
           </div>
-          <div class="profile-avatar-edit" onclick="$('#avatar-input').click()">✏️</div>
-          <input type="file" id="avatar-input" accept="image/*" style="display:none" onchange="uploadAvatar(this)">
-        </div>
-        <div class="profile-name">${user.name}</div>
-        <span class="profile-role-badge">${user.role}</span>
-      </div>
-      <div class="container" style="padding-top:16px">
-        <div class="card mb-12">
-          <div class="card-body">
-            <h3 style="font-size:1rem;margin-bottom:16px">Editar perfil</h3>
-            <div class="form-group"><label class="form-label">Nome</label><input type="text" class="form-control" id="p-name" value="${user.name||''}"></div>
-            <div class="form-group"><label class="form-label">Telefone</label><input type="tel" class="form-control" id="p-phone" value="${user.phone||''}"></div>
-            <div class="form-group"><label class="form-label">E-mail</label><input type="email" class="form-control" value="${user.email||''}" disabled style="opacity:.6"></div>
-            <div class="form-group"><label class="form-label">Bio</label><textarea class="form-control" id="p-bio">${user.bio||''}</textarea></div>
-            <button class="btn btn-primary" onclick="saveProfile()">Salvar alterações</button>
+          <div class="profile-name-section">
+            <div class="profile-display-name">${user.name}</div>
+            <div class="profile-role-chip ${user.role === 'organizador' ? 'chip-organizer' : 'chip-athlete'}">${user.role === 'organizador' ? '🏅 Organizador' : '🏃 Atleta'}</div>
+          </div>
+
+          <div class="profile-section-title">Informações pessoais</div>
+          <div class="profile-info-grid">
+            <div class="profile-field">
+              <label class="form-label">Nome</label>
+              <input type="text" class="form-control" id="p-name" value="${user.name||''}">
+            </div>
+            <div class="profile-field">
+              <label class="form-label">Telefone</label>
+              <input type="tel" class="form-control" id="p-phone" value="${user.phone||''}">
+            </div>
+            <div class="profile-field" style="grid-column:1/-1">
+              <label class="form-label">E-mail</label>
+              <input type="email" class="form-control" value="${user.email||''}" disabled style="opacity:.6">
+            </div>
+            <div class="profile-field" style="grid-column:1/-1">
+              <label class="form-label">Bio</label>
+              <textarea class="form-control" id="p-bio">${user.bio||''}</textarea>
+            </div>
+          </div>
+          <div class="profile-save-bar">
+            <span style="font-size:.85rem;color:var(--gray-500)">Salve suas alterações</span>
+            <button class="btn btn-primary" onclick="saveProfile()">Salvar</button>
+          </div>
+
+          <div class="profile-section-title" style="margin-top:28px">Alterar senha</div>
+          <div class="profile-info-grid">
+            <div class="profile-field">
+              <label class="form-label">Senha atual</label>
+              <input type="password" class="form-control" id="p-curr-pass">
+            </div>
+            <div class="profile-field">
+              <label class="form-label">Nova senha</label>
+              <input type="password" class="form-control" id="p-new-pass">
+            </div>
+          </div>
+          <button class="btn btn-ghost" onclick="savePassword()">Alterar senha</button>
+
+          <div style="margin-top:28px">
+            <button class="btn btn-danger btn-block" id="logout-btn">Sair da conta</button>
           </div>
         </div>
-        <div class="card mb-12">
-          <div class="card-body">
-            <h3 style="font-size:1rem;margin-bottom:16px">Alterar senha</h3>
-            <div class="form-group"><label class="form-label">Senha atual</label><input type="password" class="form-control" id="p-curr-pass"></div>
-            <div class="form-group"><label class="form-label">Nova senha</label><input type="password" class="form-control" id="p-new-pass"></div>
-            <button class="btn btn-outline" onclick="savePassword()">Alterar senha</button>
-          </div>
-        </div>
-        <button class="btn btn-danger btn-block" id="logout-btn">Sair da conta</button>
       </div>`;
   } catch (err) {
     el.innerHTML = `<div class="container"><div class="empty-state"><p>${err.message}</p></div></div>`;
