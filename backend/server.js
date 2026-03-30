@@ -28,6 +28,7 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrcAttr: ["'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https://images.unsplash.com", "https://*.unsplash.com"],
       connectSrc: ["'self'", ...allowedOrigins, "ws:", "wss:"],
@@ -39,6 +40,7 @@ app.use(helmet({
     }
   },
   crossOriginEmbedderPolicy: false, // needed for external images
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
   hsts: { maxAge: 31536000, includeSubDomains: true, preload: true }
 }));
 
