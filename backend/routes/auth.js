@@ -5,6 +5,14 @@ const jwt = require('jsonwebtoken');
 const { pool } = require('../config/database');
 const router = express.Router();
 
+const COOKIE_OPTS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: process.env.NODE_ENV === 'production' ? 'Strict' : 'Lax',
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 dias
+  path: '/'
+};
+
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
   const { name, email, password, phone, role } = req.body;
@@ -34,7 +42,8 @@ router.post('/register', async (req, res) => {
       { expiresIn: '7d' }
     );
 
-    res.status(201).json({ message: 'Cadastro realizado com sucesso!', token, user: { id: userId, name, email, role } });
+    res.cookie('pg_token', token, COOKIE_OPTS);
+    res.status(201).json({ message: 'Cadastro realizado com sucesso!', user: { id: userId, name, email, role } });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Erro interno do servidor.' });
@@ -67,11 +76,18 @@ router.post('/login', async (req, res) => {
       { expiresIn: '7d' }
     );
 
-    res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role, avatar: user.avatar } });
+    res.cookie('pg_token', token, COOKIE_OPTS);
+    res.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role, avatar: user.avatar } });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Erro interno do servidor.' });
   }
+});
+
+// POST /api/auth/logout
+router.post('/logout', (req, res) => {
+  res.clearCookie('pg_token', { path: '/' });
+  res.json({ message: 'Logout realizado.' });
 });
 
 module.exports = router;

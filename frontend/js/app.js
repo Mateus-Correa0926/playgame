@@ -8,15 +8,14 @@ let notifCount = 0;
 const $ = (sel, ctx = document) => ctx.querySelector(sel);
 const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
 
-function getToken() { return localStorage.getItem('pg_token'); }
+function getToken() { return null; /* cookie-only, token não fica no JS */ }
 function getUser() { return JSON.parse(localStorage.getItem('pg_user') || 'null'); }
-function setAuth(token, user) { localStorage.setItem('pg_token', token); localStorage.setItem('pg_user', JSON.stringify(user)); }
+function setAuth(user) { localStorage.removeItem('pg_token'); localStorage.setItem('pg_user', JSON.stringify(user)); }
 function clearAuth() { localStorage.removeItem('pg_token'); localStorage.removeItem('pg_user'); }
 
 async function apiFetch(path, opts = {}) {
-  const token = getToken();
-  const headers = { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(opts.headers || {}) };
-  const res = await fetch(API + path, { ...opts, headers });
+  const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+  const res = await fetch(API + path, { ...opts, headers, credentials: 'same-origin' });
   if (res.status === 401) { clearAuth(); window.location.hash = '#/login'; return null; }
   const data = await res.json().catch(() => null);
   if (!res.ok) throw new Error(data?.error || 'Erro na requisição');
@@ -281,7 +280,7 @@ function bindLoginForm() {
         body: JSON.stringify({ email: $('#login-email').value, password: $('#login-pass').value })
       });
       if (data) {
-        setAuth(data.token, data.user);
+        setAuth(data.user);
         initSocket();
         navigate('#/');
         toast('Bem-vindo, ' + data.user.name + '!', 'success');
@@ -364,7 +363,7 @@ document.addEventListener('click', async (e) => {
         })
       });
       if (data) {
-        setAuth(data.token, data.user);
+        setAuth(data.user);
         initSocket();
         navigate('#/');
         toast('Conta criada! Bem-vindo(a)!', 'success');
@@ -376,7 +375,9 @@ document.addEventListener('click', async (e) => {
 
   // Logout
   if (e.target.closest('#logout-btn')) {
+    fetch(API + '/auth/logout', { method: 'POST', credentials: 'same-origin' }).catch(() => {});
     clearAuth();
+    if (socket) { socket.disconnect(); socket = null; }
     navigate('#/login');
     toast('Você saiu da conta.');
   }
@@ -395,7 +396,7 @@ document.addEventListener('click', async (e) => {
 
 // ── NOTIFICATIONS ──
 async function loadNotifs() {
-  if (!getToken()) return;
+  if (!getUser()) return;
   try {
     const data = await apiFetch('/notifications');
     if (!data) return;
@@ -1366,7 +1367,7 @@ window.saveProfile = async function() {
     if (u) {
       Object.assign(u, body);
       u.name = $('#p-name').value;
-      setAuth(getToken(), u);
+      setAuth(u);
     }
     toast('Perfil atualizado!', 'success');
     updateNav();
@@ -1391,13 +1392,13 @@ window.uploadAvatar = async function(input) {
   form.append('avatar', input.files[0]);
   const res = await fetch(API + '/users/me/avatar', {
     method: 'POST',
-    headers: { Authorization: `Bearer ${getToken()}` },
+    credentials: 'same-origin',
     body: form
   });
   const data = await res.json();
   if (res.ok) {
     toast('Foto atualizada!', 'success');
-    const u = getUser(); if (u) { u.avatar = data.avatar; setAuth(getToken(), u); }
+    const u = getUser(); if (u) { u.avatar = data.avatar; setAuth(u); }
     renderProfile($('#page-content'));
     updateNav();
   } else { toast(data.error, 'error'); }
@@ -1409,13 +1410,13 @@ window.uploadBanner = async function(input) {
   form.append('banner', input.files[0]);
   const res = await fetch(API + '/users/me/banner', {
     method: 'POST',
-    headers: { Authorization: `Bearer ${getToken()}` },
+    credentials: 'same-origin',
     body: form
   });
   const data = await res.json();
   if (res.ok) {
     toast('Capa atualizada!', 'success');
-    const u = getUser(); if (u) { u.banner = data.banner; setAuth(getToken(), u); }
+    const u = getUser(); if (u) { u.banner = data.banner; setAuth(u); }
     renderProfile($('#page-content'));
   } else { toast(data.error, 'error'); }
 };
@@ -1517,11 +1518,9 @@ window.showArenaModal = function() {
   window.initSocket = function() {
     if (typeof io === 'undefined') return;
     if (socket && socket.connected) return;
-    socket = io();
     const user = getUser();
-    if (user) {
-      socket.emit('authenticate', user.id);
-    }
+    if (!user) return;
+    socket = io({ withCredentials: true });
     socket.on('registration_update', (data) => {
       loadNotifs();
       // Atualizar contador se estiver na página do evento

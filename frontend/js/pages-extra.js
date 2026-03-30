@@ -344,11 +344,11 @@ window.renderEventSettings = async function(el, eventId) {
               <div class="pix-icon">PIX</div>
               <div class="pix-title">PIX</div>
               <div class="pix-sub">Adicione sua chave para facilitar o pagamento dos atletas</div>
-              <div class="pix-key" id="pix-display">${localStorage.getItem(`pg_pix_${eventId}`) || 'Clique para adicionar'}</div>
+              <div class="pix-key" id="pix-display">${ev.pix_key || 'Clique para adicionar'}</div>
             </div>
             <div class="form-group" style="margin-top:12px">
               <label class="form-label">Chave PIX</label>
-              <input type="text" class="form-control" id="pix-key-input" placeholder="CPF, e-mail, telefone ou chave aleatória" value="${localStorage.getItem(`pg_pix_${eventId}`) || ''}">
+              <input type="text" class="form-control" id="pix-key-input" placeholder="CPF, e-mail, telefone ou chave aleatória" value="${ev.pix_key || ''}">
             </div>
             <button class="btn btn-secondary btn-sm" onclick="savePixKey(${eventId})">Salvar chave PIX</button>
           </div>
@@ -380,13 +380,15 @@ window.renderEventSettings = async function(el, eventId) {
   }
 };
 
-window.savePixKey = function(eventId) {
+window.savePixKey = async function(eventId) {
   const key = document.getElementById('pix-key-input')?.value;
   if (!key) return;
-  localStorage.setItem(`pg_pix_${eventId}`, key);
-  const display = document.getElementById('pix-display');
-  if (display) display.textContent = key;
-  toast('Chave PIX salva!', 'success');
+  try {
+    await apiFetch(`/events/${eventId}/pix`, { method: 'PUT', body: JSON.stringify({ pix_key: key }) });
+    const display = document.getElementById('pix-display');
+    if (display) display.textContent = key;
+    toast('Chave PIX salva!', 'success');
+  } catch (err) { toast(err.message, 'error'); }
 };
 
 window.quickChangeStatus = async function(eventId, status) {
@@ -411,13 +413,13 @@ window.buildEventDetailHTML = function(ev, user, isOwner, myReg) {
   const base = _baseDetailHTML(ev, user, isOwner, myReg);
 
   // Injetar PIX box se houver chave salva e atleta tiver inscrição
-  const pixKey = localStorage.getItem(`pg_pix_${ev.id}`);
+  const pixKey = ev.pix_key;
   const pixBox = pixKey && myReg && myReg.payment_status !== 'pago' ? `
     <div class="pix-box" style="margin-top:16px">
       <div class="pix-icon">PIX</div>
       <div class="pix-title">Pague via PIX</div>
       <div class="pix-sub">Envie para a chave abaixo e depois envie o comprovante</div>
-      <div class="pix-key" onclick="copyPix('${pixKey}')" style="cursor:pointer" title="Clique para copiar">${pixKey}</div>
+      <div class="pix-key" onclick="copyPix('${pixKey.replace(/'/g, "\\'")}')" style="cursor:pointer" title="Clique para copiar">${pixKey}</div>
     </div>` : '';
 
   // Injetar share widget

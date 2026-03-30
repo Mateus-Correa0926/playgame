@@ -7,7 +7,7 @@ const { authMiddleware, requireRole } = require('../middleware/auth');
 const router = express.Router();
 
 // GET /api/admin/overview — visão geral do sistema (apenas organizadores)
-router.get('/overview', authMiddleware, async (req, res) => {
+router.get('/overview', authMiddleware, requireRole('organizador'), async (req, res) => {
   try {
     const { rows: [users] } = await pool.query('SELECT COUNT(*)::int as total, SUM(CASE WHEN role=\'atleta\' THEN 1 ELSE 0 END)::int as athletes, SUM(CASE WHEN role=\'organizador\' THEN 1 ELSE 0 END)::int as organizers FROM users');
     const { rows: [events] } = await pool.query('SELECT COUNT(*)::int as total, SUM(CASE WHEN status=\'confirmado\' THEN 1 ELSE 0 END)::int as confirmed, SUM(CASE WHEN status=\'pendente\' THEN 1 ELSE 0 END)::int as pending FROM events');

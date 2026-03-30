@@ -187,7 +187,7 @@ window.sendProof = async function(regId) {
   try {
     const res = await fetch(`/api/payments/${regId}/proof`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${getToken()}` },
+      credentials: 'same-origin',
       body: form
     });
     const data = await res.json();

@@ -183,7 +183,7 @@ window.uploadEventBanner = async function(input, eventId) {
   try {
     const res = await fetch(`/api/events/${eventId}/banner`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${getToken()}` },
+      credentials: 'same-origin',
       body: form
     });
     const data = await res.json();

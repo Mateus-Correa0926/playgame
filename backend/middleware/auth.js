@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 
 function authMiddleware(req, res, next) {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+  const token = (authHeader && authHeader.split(' ')[1]) || req.cookies?.pg_token;
 
   if (!token) {
     return res.status(401).json({ error: 'Token não fornecido.' });
