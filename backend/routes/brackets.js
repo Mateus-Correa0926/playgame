@@ -89,6 +89,13 @@ router.post('/:eventId/generate', authMiddleware, requireRole('organizador'), as
 router.put('/match/:matchId', authMiddleware, requireRole('organizador'), async (req, res) => {
   const { team1_score, team2_score, winner_reg_id, status, scheduled_time, court } = req.body;
   try {
+    // Verificar se o organizador é dono do evento da partida
+    const { rows: ownership } = await pool.query(
+      `SELECT b.id FROM brackets b JOIN events e ON e.id = b.event_id WHERE b.id = $1 AND e.organizer_id = $2`,
+      [req.params.matchId, req.user.id]
+    );
+    if (ownership.length === 0) return res.status(403).json({ error: 'Sem permissão para editar esta partida.' });
+
     await pool.query(
       `UPDATE brackets SET team1_score=$1, team2_score=$2, winner_reg_id=$3, status=$4, scheduled_time=$5, court=$6 WHERE id=$7`,
       [team1_score, team2_score, winner_reg_id || null, status || 'finalizado', scheduled_time || null, court || null, req.params.matchId]

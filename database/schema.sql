@@ -82,6 +82,7 @@ CREATE TABLE IF NOT EXISTS events (
   rules TEXT,
   description TEXT,
   banner VARCHAR(255),
+  pix_key VARCHAR(255),
   status event_status DEFAULT 'pendente',
   arena_confirmed BOOLEAN DEFAULT false,
   arena_confirmed_at TIMESTAMP NULL,

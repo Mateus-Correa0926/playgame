@@ -8,7 +8,7 @@ services:
     environment:
       POSTGRES_DB: ${DB_NAME:-playgame}
       POSTGRES_USER: ${DB_USER:-playgame}
-      POSTGRES_PASSWORD: ${DB_PASS:-SUA_SENHA_SEGURA_AQUI}
+      POSTGRES_PASSWORD: ${DB_PASS:?DB_PASS obrigatório no .env}
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
@@ -37,8 +37,9 @@ services:
       DB_PORT: 5432
       DB_NAME: ${DB_NAME:-playgame}
       DB_USER: ${DB_USER:-playgame}
-      DB_PASS: ${DB_PASS:-SUA_SENHA_SEGURA_AQUI}
-      JWT_SECRET: ${JWT_SECRET:-troque-este-secret-em-producao}
+      DB_PASS: ${DB_PASS:?DB_PASS obrigatório no .env}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET obrigatório no .env}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:8091}
     volumes:
       - uploads:/app/uploads
     expose:

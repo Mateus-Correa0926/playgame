@@ -137,6 +137,23 @@ router.put('/:id', authMiddleware, requireRole('organizador'), async (req, res) 
   }
 });
 
+// PUT /api/events/:id/pix — salvar chave PIX do evento (organizador dono)
+router.put('/:id/pix', authMiddleware, requireRole('organizador'), async (req, res) => {
+  const { pix_key } = req.body;
+  if (!pix_key) return res.status(400).json({ error: 'Chave PIX obrigatória.' });
+  try {
+    const { rowCount } = await pool.query(
+      'UPDATE events SET pix_key=$1 WHERE id=$2 AND organizer_id=$3',
+      [pix_key, req.params.id, req.user.id]
+    );
+    if (rowCount === 0) return res.status(404).json({ error: 'Evento não encontrado ou sem permissão.' });
+    res.json({ message: 'Chave PIX salva!' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erro ao salvar chave PIX.' });
+  }
+});
+
 // DELETE /api/events/:id — excluir evento (organizador dono)
 router.delete('/:id', authMiddleware, requireRole('organizador'), async (req, res) => {
   try {
@@ -151,22 +168,24 @@ router.delete('/:id', authMiddleware, requireRole('organizador'), async (req, re
   }
 });
 
-// PUT /api/events/:id/confirm-arena — arena confirma evento
-router.put('/:id/confirm-arena', authMiddleware, async (req, res) => {
+// PUT /api/events/:id/confirm-arena — arena confirma evento (apenas organizador do evento)
+router.put('/:id/confirm-arena', authMiddleware, requireRole('organizador'), async (req, res) => {
   try {
+    // Verificar propriedade do evento
+    const { rows: ev } = await pool.query('SELECT id, organizer_id, title FROM events WHERE id=$1', [req.params.id]);
+    if (ev.length === 0) return res.status(404).json({ error: 'Evento não encontrado.' });
+    if (ev[0].organizer_id !== req.user.id) return res.status(403).json({ error: 'Sem permissão.' });
+
     await pool.query(
       'UPDATE events SET arena_confirmed=true, arena_confirmed_at=NOW(), status=\'confirmado\' WHERE id=$1',
       [req.params.id]
     );
 
     // Notificar organizador
-    const { rows: event } = await pool.query('SELECT organizer_id, title FROM events WHERE id=$1', [req.params.id]);
-    if (event.length > 0) {
-      await pool.query(
-        'INSERT INTO notifications (user_id, type, title, message, event_id) VALUES ($1, \'arena_confirm\', $2, $3, $4)',
-        [event[0].organizer_id, 'Arena confirmou seu evento!', `A arena confirmou o evento "${event[0].title}".`, req.params.id]
-      );
-    }
+    await pool.query(
+      'INSERT INTO notifications (user_id, type, title, message, event_id) VALUES ($1, \'arena_confirm\', $2, $3, $4)',
+      [ev[0].organizer_id, 'Arena confirmou seu evento!', `A arena confirmou o evento "${ev[0].title}".`, req.params.id]
+    );
 
     res.json({ message: 'Evento confirmado pela arena!' });
   } catch (err) {
