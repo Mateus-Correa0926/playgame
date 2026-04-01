@@ -19,9 +19,10 @@ function authMiddleware(req, res, next) {
 }
 
 function requireRole(role) {
+  const roles = Array.isArray(role) ? role : [role];
   return (req, res, next) => {
-    if (req.user.role !== role) {
-      return res.status(403).json({ error: `Acesso negado. Apenas ${role}es podem acessar esta rota.` });
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ error: `Acesso negado. Apenas ${roles.join(', ')} podem acessar esta rota.` });
     }
     next();
   };

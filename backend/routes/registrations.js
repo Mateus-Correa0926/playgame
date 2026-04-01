@@ -2,7 +2,7 @@
 const express = require('express');
 const { pool } = require('../config/database');
 const { authMiddleware, requireRole } = require('../middleware/auth');
-const { registrationRules } = require('../middleware/validate');
+const { registrationRules, updateRegistrationRules, paramId } = require('../middleware/validate');
 const router = express.Router();
 
 // POST /api/registrations — atleta se inscreve (auto-fill from profile)
@@ -56,7 +56,7 @@ router.post('/', authMiddleware, requireRole('atleta'), registrationRules, async
 });
 
 // PUT /api/registrations/:id — atleta edita dados da dupla
-router.put('/:id', authMiddleware, requireRole('atleta'), async (req, res) => {
+router.put('/:id', authMiddleware, requireRole('atleta'), updateRegistrationRules, async (req, res) => {
   const { partner_name, partner_email, partner_phone, team_name, notes } = req.body;
   try {
     const { rows } = await pool.query(

@@ -59,7 +59,7 @@ window.runAdvancedSearch = async function() {
       <div style="font-size:.82rem;color:var(--text-muted);margin-bottom:12px;font-weight:600">${events.length} resultado(s) encontrado(s)</div>
       <div class="events-grid">${events.map(e => buildEventCard(e)).join('')}</div>`;
   } catch (err) {
-    resultsEl.innerHTML = `<div class="alert alert-error">${err.message}</div>`;
+    resultsEl.innerHTML = `<div class="alert alert-error">${esc(err.message)}</div>`;
   }
 };
 
@@ -152,7 +152,7 @@ window.renderArenaDetail = async function(el, arenaId) {
         </div>
       </div>`;
   } catch (err) {
-    el.innerHTML = `<div class="container" style="padding-top:20px"><div class="alert alert-error">${err.message}</div></div>`;
+    el.innerHTML = `<div class="container" style="padding-top:20px"><div class="alert alert-error">${esc(err.message)}</div></div>`;
   }
 };
 
@@ -376,7 +376,7 @@ window.renderEventSettings = async function(el, eventId) {
         </div>
       </div>`;
   } catch (err) {
-    el.innerHTML = `<div class="container" style="padding-top:20px"><div class="alert alert-error">${err.message}</div></div>`;
+    el.innerHTML = `<div class="container" style="padding-top:20px"><div class="alert alert-error">${esc(err.message)}</div></div>`;
   }
 };
 

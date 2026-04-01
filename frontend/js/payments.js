@@ -60,7 +60,7 @@ window.renderPaymentsPage = async function(el, eventId) {
           </div>` : ''}
       </div>`;
   } catch (err) {
-    document.getElementById('page-content').innerHTML = `<div class="container" style="padding-top:20px"><div class="alert alert-error">${err.message}</div></div>`;
+    document.getElementById('page-content').innerHTML = `<div class="container" style="padding-top:20px"><div class="alert alert-error">${esc(err.message)}</div></div>`;
   }
 };
 

@@ -86,7 +86,7 @@ window.renderAthletesList = async function(el) {
       </div>
       <div class="container">${rows}</div>`;
   } catch (err) {
-    el.innerHTML = `<div class="container" style="padding-top:20px"><div class="alert alert-error"><span class="alert-icon">!</span>${err.message}</div></div>`;
+    el.innerHTML = `<div class="container" style="padding-top:20px"><div class="alert alert-error"><span class="alert-icon">!</span>${esc(err.message)}</div></div>`;
   }
 };
 
@@ -259,7 +259,7 @@ window.renderMyRegistrations = async function(el) {
         </div>
       </div>`;
   } catch (err) {
-    el.innerHTML = `<div class="container" style="padding-top:20px"><div class="alert alert-error"><span class="alert-icon">!</span>${err.message}</div></div>`;
+    el.innerHTML = `<div class="container" style="padding-top:20px"><div class="alert alert-error"><span class="alert-icon">!</span>${esc(err.message)}</div></div>`;
   }
 };
 
@@ -320,9 +320,8 @@ window.renderArenas = async function(el) {
 
 // Mostrar onboarding para visitantes sem conta
 (function() {
-  const token = localStorage.getItem('pg_token');
   const onboarded = localStorage.getItem('pg_onboarded');
-  if (!token && !onboarded && window.showOnboarding) {
+  if (!getUser() && !onboarded && window.showOnboarding) {
     setTimeout(showOnboarding, 500);
   }
 })();
