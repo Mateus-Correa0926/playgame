@@ -16,8 +16,8 @@ function esc(str) {
 
 function getToken() { return null; /* cookie-only, token não fica no JS */ }
 function getUser() { return JSON.parse(localStorage.getItem('pg_user') || 'null'); }
-function setAuth(user) { localStorage.removeItem('pg_token'); localStorage.setItem('pg_user', JSON.stringify(user)); }
-function clearAuth() { localStorage.removeItem('pg_token'); localStorage.removeItem('pg_user'); }
+function setAuth(user) { localStorage.setItem('pg_user', JSON.stringify(user)); }
+function clearAuth() { localStorage.removeItem('pg_user'); }
 
 async function apiFetch(path, opts = {}) {
   const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
@@ -97,18 +97,49 @@ function route(hash, fn) { routes[hash] = fn; }
 
 function navigate(hash) { window.location.hash = hash; }
 
+// Rotas públicas: acessíveis sem login
+const publicRoutes = ['#/', '#/login', '#/register'];
+function isPublicRoute(hash) {
+  if (publicRoutes.some(r => hash === r)) return true;
+  if (hash.startsWith('#/eventos/')) return true; // detalhe do evento
+  return false;
+}
+
+// Restaurar sessão via cookie ao carregar
+let _sessionRestored = false;
+async function restoreSession() {
+  if (_sessionRestored) return;
+  _sessionRestored = true;
+  try {
+    const res = await fetch(API + '/auth/me', { credentials: 'same-origin' });
+    if (res.ok) {
+      const data = await res.json();
+      if (data?.user) {
+        setAuth(data.user);
+        currentUser = data.user;
+        initSocket();
+      }
+    } else {
+      clearAuth();
+    }
+  } catch { /* offline or error — keep guest mode */ }
+}
+
 window.addEventListener('hashchange', render);
-window.addEventListener('load', render);
+window.addEventListener('load', async () => {
+  await restoreSession();
+  render();
+  startGuestPromptTimer();
+});
 
 function render() {
   const hash = window.location.hash || '#/';
   const user = getUser();
   currentUser = user;
 
-  // Auth guard
-  const publicRoutes = ['#/login', '#/register', '#/'];
-  if (!user && !publicRoutes.some(r => hash.startsWith(r))) {
-    return navigate('#/login');
+  // Auth guard: redireciona para home se rota protegida sem login
+  if (!user && !isPublicRoute(hash)) {
+    return navigate('#/');
   }
 
   const mainApp = $('#main-app');
@@ -129,15 +160,24 @@ function render() {
 
 function updateNav() {
   const user = getUser();
-  if (!user) return;
 
   // Avatar in topbar
   const avatarEl = $('#nav-avatar');
   if (avatarEl) {
-    if (user.avatar) {
-      avatarEl.innerHTML = `<img src="${esc(user.avatar)}" alt="">`;
+    if (user) {
+      avatarEl.removeAttribute('onclick');
+      avatarEl.href = '#/perfil';
+      if (user.avatar) {
+        avatarEl.innerHTML = `<img src="${esc(user.avatar)}" alt="">`;
+      } else {
+        avatarEl.textContent = avatarInitials(user.name);
+      }
     } else {
-      avatarEl.textContent = avatarInitials(user.name);
+      // Guest: ícone de perfil genérico
+      avatarEl.removeAttribute('href');
+      avatarEl.style.cursor = 'pointer';
+      avatarEl.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+      avatarEl.onclick = function(e) { e.preventDefault(); e.stopPropagation(); toggleGuestMenu(); };
     }
   }
 
@@ -146,7 +186,7 @@ function updateNav() {
   const titleEl = $('#topbar-title');
   if (titleEl) {
     const titleMap = {
-      '#/': user.role === 'organizador' ? 'Meus Eventos' : 'Eventos',
+      '#/': (user && user.role === 'organizador') ? 'Meus Eventos' : 'Eventos',
       '#/criar-evento': 'Novo Evento',
       '#/minhas-inscricoes': 'Minhas Inscrições',
       '#/convites': 'Convites',
@@ -161,7 +201,11 @@ function updateNav() {
   }
 
   // Sidebar nav
-  updateSidebar(user);
+  if (user) {
+    updateSidebar(user);
+  } else {
+    updateSidebarGuest();
+  }
 
   // Bottom nav active
   $$('.bottom-nav-item').forEach(el => {
@@ -462,7 +506,7 @@ async function renderHome(el) {
     el.innerHTML = buildHomeHTML(events, user);
     bindFilters();
   } catch (err) {
-    el.innerHTML = `<div class="container"><div class="empty-state"><div class="icon"></div><p>${err.message}</p></div></div>`;
+    el.innerHTML = `<div class="container"><div class="empty-state"><div class="icon"></div><p>${esc(err.message)}</p></div></div>`;
   }
 }
 
@@ -550,7 +594,7 @@ async function renderEventDetail(el, id) {
     el.innerHTML = buildEventDetailHTML(ev, user, isOwner, myReg);
     bindEventDetailActions(ev, user, myReg);
   } catch (err) {
-    el.innerHTML = `<div class="container"><div class="empty-state"><div class="icon"></div><p>${err.message}</p></div></div>`;
+    el.innerHTML = `<div class="container"><div class="empty-state"><div class="icon"></div><p>${esc(err.message)}</p></div></div>`;
   }
 }
 
@@ -595,7 +639,7 @@ function buildEventDetailHTML(ev, user, isOwner, myReg) {
        <button class="btn btn-outline btn-sm" onclick="openEditRegModal(${myReg.id})">Editar dupla</button>`
     : user.role === 'atleta'
       ? `<button class="btn btn-primary" id="register-btn" data-event-id="${ev.id}">Inscrever-se — ${formatCurrency(ev.registration_fee)}</button>`
-      : '') : `<a href="#/login" class="btn btn-primary">Entre para se inscrever</a>`;
+      : '') : `<button class="btn btn-primary" id="guest-register-btn" data-event-id="${ev.id}">Inscrever-se — ${formatCurrency(ev.registration_fee)}</button>`;
 
   const orgActions = isOwner ? `
     <div class="card mb-12">
@@ -700,6 +744,12 @@ function bindEventDetailActions(ev, user, myReg) {
   const regBtn = $('#register-btn');
   if (regBtn) {
     regBtn.addEventListener('click', () => openRegisterModal(ev.id, ev));
+  }
+
+  // Guest register button — exige login
+  const guestRegBtn = $('#guest-register-btn');
+  if (guestRegBtn) {
+    guestRegBtn.addEventListener('click', () => showLoginRequiredPopup());
   }
 
   // Leave event
@@ -1019,7 +1069,7 @@ async function renderEventList(el) {
       </div>`;
     bindFilters();
   } catch (err) {
-    el.innerHTML = `<div class="container"><div class="empty-state"><p>${err.message}</p></div></div>`;
+    el.innerHTML = `<div class="container"><div class="empty-state"><p>${esc(err.message)}</p></div></div>`;
   }
 }
 
@@ -1053,7 +1103,7 @@ async function renderMyRegistrations(el) {
       <div class="page-header"><div class="container"><h1>Minhas Inscrições</h1></div></div>
       <div class="container"><div class="events-grid">${cards}</div></div>`;
   } catch (err) {
-    el.innerHTML = `<div class="container"><div class="empty-state"><p>${err.message}</p></div></div>`;
+    el.innerHTML = `<div class="container"><div class="empty-state"><p>${esc(err.message)}</p></div></div>`;
   }
 }
 
@@ -1103,7 +1153,7 @@ async function renderMyInvites(el) {
         ${sentCards}
       </div>`;
   } catch (err) {
-    el.innerHTML = `<div class="container"><div class="empty-state"><p>${err.message}</p></div></div>`;
+    el.innerHTML = `<div class="container"><div class="empty-state"><p>${esc(err.message)}</p></div></div>`;
   }
 }
 
@@ -1196,7 +1246,7 @@ async function renderDashboard(el) {
       </div>`;
     bindFilters();
   } catch (err) {
-    el.innerHTML = `<div class="empty-state"><p>${err.message}</p></div>`;
+    el.innerHTML = `<div class="empty-state"><p>${esc(err.message)}</p></div>`;
   }
 }
 
@@ -1351,7 +1401,7 @@ async function renderProfile(el) {
         </div>
       </div>`;
   } catch (err) {
-    el.innerHTML = `<div class="container"><div class="empty-state"><p>${err.message}</p></div></div>`;
+    el.innerHTML = `<div class="container"><div class="empty-state"><p>${esc(err.message)}</p></div></div>`;
   }
 }
 
@@ -1464,7 +1514,7 @@ async function renderArenas(el) {
       </div>
       <div class="container">${list}</div>`;
   } catch (err) {
-    el.innerHTML = `<div class="container"><div class="empty-state"><p>${err.message}</p></div></div>`;
+    el.innerHTML = `<div class="container"><div class="empty-state"><p>${esc(err.message)}</p></div></div>`;
   }
 }
 
@@ -1565,3 +1615,121 @@ window.addEventListener('scroll', () => {
   const nav = document.querySelector('.navbar');
   if (nav) nav.classList.toggle('scrolled', window.scrollY > 10);
 }, { passive: true });
+
+// ── GUEST SIDEBAR ──
+function updateSidebarGuest() {
+  const navEl = $('#sidebar-nav');
+  const footerEl = $('#sidebar-footer');
+  if (!navEl || !footerEl) return;
+  navEl.innerHTML = `
+    <div class="nav-section-title">Principal</div>
+    <a class="nav-item active" href="#/">Início</a>
+  `;
+  footerEl.innerHTML = `
+    <a class="nav-item" href="#/login" style="color:var(--orange)">Entrar</a>
+    <a class="nav-item" href="#/register">Criar conta</a>
+  `;
+}
+
+// ── GUEST AVATAR MENU (dropdown) ──
+function toggleGuestMenu() {
+  const existing = $('#guest-menu');
+  if (existing) { existing.remove(); return; }
+
+  const menu = document.createElement('div');
+  menu.id = 'guest-menu';
+  menu.className = 'guest-menu';
+  menu.innerHTML = `
+    <a href="#/login" class="guest-menu-item">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+      Entrar
+    </a>
+    <a href="#/register" class="guest-menu-item">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+      Criar conta
+    </a>
+  `;
+  document.body.appendChild(menu);
+
+  // Fechar ao clicar fora
+  setTimeout(() => {
+    document.addEventListener('click', function closeGuestMenu(e) {
+      if (!e.target.closest('#guest-menu') && !e.target.closest('#nav-avatar')) {
+        const m = $('#guest-menu');
+        if (m) m.remove();
+        document.removeEventListener('click', closeGuestMenu);
+      }
+    });
+  }, 10);
+}
+
+// ── POPUP DE CADASTRO APÓS 1 MINUTO (para visitantes) ──
+let _guestPromptShown = false;
+function startGuestPromptTimer() {
+  if (getUser()) return; // já logado, não mostra
+  setTimeout(() => {
+    if (getUser() || _guestPromptShown) return;
+    _guestPromptShown = true;
+    showGuestPromptPopup();
+  }, 60000); // 1 minuto
+}
+
+function showGuestPromptPopup() {
+  if ($('#guest-prompt-modal')) return;
+  const overlay = document.createElement('div');
+  overlay.id = 'guest-prompt-modal';
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:400px">
+      <div class="modal-header">
+        <h2 style="font-size:1.2rem">Aproveite mais o PlayGAME!</h2>
+        <button class="modal-close" id="guest-prompt-close">&times;</button>
+      </div>
+      <div class="modal-body" style="text-align:center;padding:24px 20px">
+        <div style="font-size:2.5rem;margin-bottom:12px">🏐</div>
+        <p style="color:var(--text-muted);font-size:.9rem;margin-bottom:20px">
+          Crie uma conta para se inscrever em torneios, receber notificações e acompanhar seus eventos.
+        </p>
+        <a href="#/register" class="btn btn-primary btn-block" style="margin-bottom:10px" onclick="document.getElementById('guest-prompt-modal').remove()">Criar conta grátis</a>
+        <a href="#/login" class="btn btn-outline btn-block" style="margin-bottom:10px" onclick="document.getElementById('guest-prompt-modal').remove()">Já tenho conta — Entrar</a>
+        <button class="btn btn-ghost btn-block" id="guest-prompt-skip" style="font-size:.85rem;color:var(--text-muted)">Continuar sem cadastro</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  $('#guest-prompt-close').onclick = () => overlay.remove();
+  $('#guest-prompt-skip').onclick = () => overlay.remove();
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+}
+
+// ── FUNÇÃO PARA EXIGIR LOGIN (usada na inscrição) ──
+window.requireLogin = function(callback) {
+  const user = getUser();
+  if (user) { callback(user); return; }
+  showLoginRequiredPopup(callback);
+};
+
+function showLoginRequiredPopup(callback) {
+  if ($('#login-required-modal')) return;
+  const overlay = document.createElement('div');
+  overlay.id = 'login-required-modal';
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:380px">
+      <div class="modal-header">
+        <h2 style="font-size:1.1rem">Faça login para continuar</h2>
+        <button class="modal-close" id="login-req-close">&times;</button>
+      </div>
+      <div class="modal-body" style="text-align:center;padding:20px">
+        <p style="color:var(--text-muted);font-size:.9rem;margin-bottom:18px">
+          Você precisa estar logado para se inscrever em um torneio.
+        </p>
+        <a href="#/login" class="btn btn-primary btn-block" style="margin-bottom:10px" onclick="document.getElementById('login-required-modal').remove()">Entrar</a>
+        <a href="#/register" class="btn btn-outline btn-block" onclick="document.getElementById('login-required-modal').remove()">Criar conta</a>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  $('#login-req-close').onclick = () => overlay.remove();
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+}

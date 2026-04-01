@@ -260,14 +260,13 @@ window.addEventListener('popstate', () => render());
 (function handleDeepLinks() {
   const hash = window.location.hash;
   if (hash && hash !== '#/' && hash !== '#') {
-    const token = localStorage.getItem('pg_token');
-    if (!token) {
+    if (!getUser()) {
       localStorage.setItem('pg_redirect', hash);
     }
   }
   // After login, redirect to saved deep link
   const savedRedirect = localStorage.getItem('pg_redirect');
-  if (savedRedirect && localStorage.getItem('pg_token')) {
+  if (savedRedirect && getUser()) {
     localStorage.removeItem('pg_redirect');
     setTimeout(() => navigate(savedRedirect), 300);
   }

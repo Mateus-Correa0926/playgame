@@ -37,7 +37,7 @@ window.renderBrackets = async function(el, eventId) {
       </div>`;
   } catch (err) {
     const c = document.getElementById('page-content');
-    if (c) c.innerHTML = `<div class="container" style="padding-top:20px"><div class="alert alert-error">${err.message}</div></div>`;
+    if (c) c.innerHTML = `<div class="container" style="padding-top:20px"><div class="alert alert-error">${esc(err.message)}</div></div>`;
   }
 };
 

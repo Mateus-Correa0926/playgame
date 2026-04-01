@@ -145,6 +145,36 @@ const pixKeyRules = [
   handleValidation
 ];
 
+// ── Param-only validators ──
+
+const paramId = [intId('id'), handleValidation];
+const paramRegId = [param('regId').isInt({ min: 1 }).withMessage('ID de inscrição inválido.'), handleValidation];
+const paramEventId = [param('eventId').isInt({ min: 1 }).withMessage('ID do evento inválido.'), handleValidation];
+
+const rejectRules = [
+  param('regId').isInt({ min: 1 }).withMessage('ID de inscrição inválido.'),
+  safeText('reason', 500),
+  handleValidation
+];
+
+const updateRegistrationRules = [
+  intId('id'),
+  optStr('partner_name', 150),
+  body('partner_email').optional({ values: 'falsy' }).isEmail().withMessage('E-mail do parceiro inválido.').normalizeEmail(),
+  optStr('partner_phone', 20),
+  optStr('team_name', 150),
+  safeText('notes', 500),
+  handleValidation
+];
+
+const searchQuery = [
+  query('q').optional().trim().isLength({ max: 100 }).withMessage('Busca muito longa.'),
+  query('modality').optional().trim().isLength({ max: 50 }),
+  query('city').optional().trim().isLength({ max: 100 }),
+  query('status').optional().trim().isIn(['aberto', 'confirmado', 'finalizado', 'cancelado']).withMessage('Status inválido.'),
+  handleValidation
+];
+
 module.exports = {
   handleValidation,
   registerRules,
@@ -156,6 +186,12 @@ module.exports = {
   commentRules,
   registrationRules,
   pixKeyRules,
+  paramId,
+  paramRegId,
+  paramEventId,
+  rejectRules,
+  updateRegistrationRules,
+  searchQuery,
   intId,
   safeText,
   safeTextReq,

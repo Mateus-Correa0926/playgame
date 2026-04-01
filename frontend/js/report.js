@@ -123,7 +123,7 @@ window.renderEventReport = async function(el, eventId) {
     });
 
   } catch (err) {
-    document.getElementById('page-content').innerHTML = `<div class="container" style="padding-top:20px"><div class="alert alert-error"><span class="alert-icon">!</span>${err.message}</div></div>`;
+    document.getElementById('page-content').innerHTML = `<div class="container" style="padding-top:20px"><div class="alert alert-error"><span class="alert-icon">!</span>${esc(err.message)}</div></div>`;
   }
 };
 

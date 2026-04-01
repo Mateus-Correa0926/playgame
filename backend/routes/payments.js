@@ -4,10 +4,22 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const { pool } = require('../config/database');
 const { authMiddleware, requireRole } = require('../middleware/auth');
 const { auditLog } = require('../middleware/audit');
+const { paramRegId, paramEventId, rejectRules } = require('../middleware/validate');
 const router = express.Router();
+
+// Helper: remove arquivo antigo com segurança
+function removeOldFile(filePath) {
+  if (!filePath) return;
+  const full = path.join(__dirname, '../../', filePath);
+  const resolved = path.resolve(full);
+  const uploadsDir = path.resolve(path.join(__dirname, '../../uploads'));
+  if (!resolved.startsWith(uploadsDir)) return;
+  fs.unlink(resolved, () => {});
+}
 
 // Helper: registra mudança de status no log unificado
 async function logPaymentChange(regId, oldStatus, newStatus, userId, reason) {
@@ -20,10 +32,18 @@ async function logPaymentChange(regId, oldStatus, newStatus, userId, reason) {
 }
 
 // Multer para comprovante de pagamento
+const ALLOWED_MIMES = {
+  'image/jpeg': '.jpg',
+  'image/png': '.png',
+  'image/webp': '.webp',
+  'application/pdf': '.pdf'
+};
+
 const proofStorage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, path.join(__dirname, '../../uploads')),
   filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
+    // Use MIME-based extension instead of user-supplied filename
+    const ext = ALLOWED_MIMES[file.mimetype] || '.bin';
     cb(null, `proof_reg${req.params.regId}_${Date.now()}${ext}`);
   }
 });
@@ -31,14 +51,15 @@ const uploadProof = multer({
   storage: proofStorage,
   limits: { fileSize: 8 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    const allowed = ['.jpg', '.jpeg', '.png', '.pdf', '.webp'];
-    const ext = path.extname(file.originalname).toLowerCase();
-    cb(null, allowed.includes(ext));
+    if (!ALLOWED_MIMES[file.mimetype]) {
+      return cb(new Error('Tipo de arquivo inválido. Use JPG, PNG, WebP ou PDF.'));
+    }
+    cb(null, true);
   }
 });
 
 // POST /api/payments/:regId/proof — atleta envia comprovante
-router.post('/:regId/proof', authMiddleware, requireRole('atleta'), uploadProof.single('proof'), async (req, res) => {
+router.post('/:regId/proof', authMiddleware, requireRole('atleta'), paramRegId, uploadProof.single('proof'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Arquivo inválido. Use JPG, PNG ou PDF.' });
 
   try {
@@ -47,6 +68,9 @@ router.post('/:regId/proof', authMiddleware, requireRole('atleta'), uploadProof.
       [req.params.regId, req.user.id]
     );
     if (rows.length === 0) return res.status(404).json({ error: 'Inscrição não encontrada.' });
+
+    // Remover comprovante antigo se existir
+    removeOldFile(rows[0].payment_proof);
 
     const proofPath = `/uploads/${req.file.filename}`;
     await pool.query('UPDATE registrations SET payment_proof=$1 WHERE id=$2', [proofPath, req.params.regId]);
@@ -68,7 +92,7 @@ router.post('/:regId/proof', authMiddleware, requireRole('atleta'), uploadProof.
 });
 
 // GET /api/payments/event/:eventId — organizador vê todos pagamentos de um evento
-router.get('/event/:eventId', authMiddleware, requireRole('organizador'), async (req, res) => {
+router.get('/event/:eventId', authMiddleware, requireRole('organizador'), paramEventId, async (req, res) => {
   try {
     const { rows: check } = await pool.query('SELECT id FROM events WHERE id=$1 AND organizer_id=$2', [req.params.eventId, req.user.id]);
     if (check.length === 0) return res.status(403).json({ error: 'Sem permissão.' });
@@ -88,7 +112,7 @@ router.get('/event/:eventId', authMiddleware, requireRole('organizador'), async 
 });
 
 // GET /api/payments/:regId/history — histórico de mudanças de status
-router.get('/:regId/history', authMiddleware, async (req, res) => {
+router.get('/:regId/history', authMiddleware, paramRegId, async (req, res) => {
   try {
     // Atleta dono ou organizador do evento
     const { rows: reg } = await pool.query(
@@ -113,7 +137,7 @@ router.get('/:regId/history', authMiddleware, async (req, res) => {
 });
 
 // PUT /api/payments/:regId/approve — organizador aprova
-router.put('/:regId/approve', authMiddleware, requireRole('organizador'), async (req, res) => {
+router.put('/:regId/approve', authMiddleware, requireRole('organizador'), paramRegId, async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT r.*, e.title, e.organizer_id, e.participant_limit,
@@ -151,7 +175,7 @@ router.put('/:regId/approve', authMiddleware, requireRole('organizador'), async 
 });
 
 // PUT /api/payments/:regId/reject — organizador rejeita
-router.put('/:regId/reject', authMiddleware, requireRole('organizador'), async (req, res) => {
+router.put('/:regId/reject', authMiddleware, requireRole('organizador'), rejectRules, async (req, res) => {
   const { reason } = req.body;
   try {
     const { rows } = await pool.query(
@@ -162,6 +186,8 @@ router.put('/:regId/reject', authMiddleware, requireRole('organizador'), async (
     if (rows.length === 0) return res.status(404).json({ error: 'Registro não encontrado.' });
 
     const oldStatus = rows[0].payment_status;
+    // Remover comprovante recusado do disco
+    removeOldFile(rows[0].payment_proof);
     await pool.query(
       'UPDATE registrations SET payment_status=\'pendente\', payment_proof=NULL WHERE id=$1',
       [req.params.regId]
@@ -178,6 +204,30 @@ router.put('/:regId/reject', authMiddleware, requireRole('organizador'), async (
     res.json({ message: 'Pagamento rejeitado e atleta notificado.' });
   } catch (err) {
     res.status(500).json({ error: 'Erro ao rejeitar pagamento.' });
+  }
+});
+
+// GET /api/payments/proof/:regId — download protegido do comprovante (dono ou organizador)
+router.get('/proof/:regId', authMiddleware, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT r.payment_proof, r.athlete_id, e.organizer_id
+       FROM registrations r JOIN events e ON e.id=r.event_id
+       WHERE r.id=$1`,
+      [req.params.regId]
+    );
+    if (rows.length === 0) return res.status(404).json({ error: 'Inscrição não encontrada.' });
+    const reg = rows[0];
+    if (reg.athlete_id !== req.user.id && reg.organizer_id !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Sem permissão para acessar este comprovante.' });
+    }
+    if (!reg.payment_proof) return res.status(404).json({ error: 'Nenhum comprovante enviado.' });
+
+    const filePath = path.join(__dirname, '../../', reg.payment_proof);
+    res.sendFile(path.resolve(filePath));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erro ao buscar comprovante.' });
   }
 });
 

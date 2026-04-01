@@ -79,6 +79,25 @@ router.post('/login', loginRules, async (req, res) => {
   }
 });
 
+// GET /api/auth/me — restaurar sessão via cookie
+router.get('/me', (req, res) => {
+  const token = req.cookies?.pg_token;
+  if (!token) return res.status(401).json({ error: 'Não autenticado.' });
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    pool.query('SELECT id, name, email, role, avatar, phone FROM users WHERE id = $1', [decoded.id])
+      .then(({ rows }) => {
+        if (rows.length === 0) return res.status(401).json({ error: 'Usuário não encontrado.' });
+        const u = rows[0];
+        res.json({ user: { id: u.id, name: u.name, email: u.email, role: u.role, avatar: u.avatar } });
+      })
+      .catch(() => res.status(500).json({ error: 'Erro interno.' }));
+  } catch {
+    res.clearCookie('pg_token', { path: '/' });
+    return res.status(401).json({ error: 'Token inválido.' });
+  }
+});
+
 // POST /api/auth/logout
 router.post('/logout', (req, res) => {
   res.clearCookie('pg_token', { path: '/' });

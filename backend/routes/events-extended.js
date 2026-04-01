@@ -3,28 +3,53 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const { pool } = require('../config/database');
 const { authMiddleware, requireRole } = require('../middleware/auth');
+const { searchQuery } = require('../middleware/validate');
 const router = express.Router();
 
-// Multer para banner
+// Multer para banner — validação por MIME type
+const IMAGE_MIMES = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp' };
+
 const bannerStorage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, path.join(__dirname, '../../uploads')),
   filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
+    const ext = IMAGE_MIMES[file.mimetype] || '.bin';
     cb(null, `banner_event_${req.params.id}_${Date.now()}${ext}`);
   }
 });
-const uploadBanner = multer({ storage: bannerStorage, limits: { fileSize: 8 * 1024 * 1024 } });
+const uploadBanner = multer({
+  storage: bannerStorage,
+  limits: { fileSize: 8 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (!IMAGE_MIMES[file.mimetype]) {
+      return cb(new Error('Tipo de arquivo inválido. Use JPG, PNG ou WebP.'));
+    }
+    cb(null, true);
+  }
+});
+
+// Helper: remove arquivo antigo com segurança
+function removeOldFile(filePath) {
+  if (!filePath) return;
+  const full = path.join(__dirname, '../../', filePath);
+  const resolved = path.resolve(full);
+  const uploadsDir = path.resolve(path.join(__dirname, '../../uploads'));
+  if (!resolved.startsWith(uploadsDir)) return;
+  fs.unlink(resolved, () => {});
+}
 
 // POST /api/events/:id/banner
 router.post('/:id/banner', authMiddleware, requireRole('organizador'), uploadBanner.single('banner'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Nenhuma imagem enviada.' });
   const bannerPath = `/uploads/${req.file.filename}`;
   try {
-    const { rows } = await pool.query('SELECT * FROM events WHERE id=$1 AND organizer_id=$2', [req.params.id, req.user.id]);
+    const { rows } = await pool.query('SELECT banner FROM events WHERE id=$1 AND organizer_id=$2', [req.params.id, req.user.id]);
     if (rows.length === 0) return res.status(403).json({ error: 'Sem permissão.' });
+    const oldBanner = rows[0].banner;
     await pool.query('UPDATE events SET banner=$1 WHERE id=$2', [bannerPath, req.params.id]);
+    removeOldFile(oldBanner);
     res.json({ message: 'Banner atualizado!', banner: bannerPath });
   } catch (err) {
     res.status(500).json({ error: 'Erro ao salvar banner.' });
@@ -32,7 +57,7 @@ router.post('/:id/banner', authMiddleware, requireRole('organizador'), uploadBan
 });
 
 // GET /api/events/search?q=termo&modality=&city=
-router.get('/search', async (req, res) => {
+router.get('/search', searchQuery, async (req, res) => {
   const { q, modality, city, status } = req.query;
   try {
     let sql = `

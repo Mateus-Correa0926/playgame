@@ -90,7 +90,7 @@ window.renderHome = async function(el) {
     bindFilters();
     initCalendarWidget();
   } catch (err) {
-    el.innerHTML = `<div class="empty-state"><p>${err.message}</p></div>`;
+    el.innerHTML = `<div class="empty-state"><p>${esc(err.message)}</p></div>`;
   }
 };
 
@@ -134,7 +134,7 @@ window.renderDashboard = async function(el) {
 
     bindFilters();
   } catch (err) {
-    el.innerHTML = `<div class="empty-state"><p>${err.message}</p></div>`;
+    el.innerHTML = `<div class="empty-state"><p>${esc(err.message)}</p></div>`;
   }
 };
 
