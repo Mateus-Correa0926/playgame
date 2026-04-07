@@ -1,7 +1,7 @@
 -- PlayGAME Seed Data (PostgreSQL)
 -- Execute APÓS o schema.sql
 
--- Usuarios de teste (bcrypt hash)
+-- Usuários de teste (troque as senhas no primeiro acesso)
 INSERT INTO users (name, email, password, phone, role) VALUES
 ('Admin Organizador', 'organizador@playgame.com', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '(11) 99999-0001', 'organizador'),
 ('Carlos Silva', 'carlos@playgame.com', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '(11) 99999-0002', 'atleta'),
